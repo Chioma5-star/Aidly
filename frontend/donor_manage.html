@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Manage My Donations - Aidly</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body onload="loadRequests()">
+    <nav>
+        <h2>Aidly Donor Panel</h2>
+        <button onclick="window.location.href='dashboard.html'">Back to Dashboard</button>
+    </nav>
+
+    <div class="container">
+        <h3>Incoming Requests</h3>
+        <div id="requestList" class="donor-grid">
+            <p>Checking for requests...</p>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+        /* Inside donor_manage.html */
+async function loadRequests() {
+    const list = document.getElementById("requestList");
+    try {
+        const requests = await AidlyAPI.get("/donations/donor-requests");
+        
+        if (requests.length === 0) {
+            list.innerHTML = "<p>No pending requests for your items yet.</p>";
+            return;
+        }
+
+        // THIS IS WHERE YOU PUT THE MAPPING CODE:
+        list.innerHTML = requests.map(r => `
+            <div class="request-card">
+                <h4>📦 ${r.type.toUpperCase()}</h4>
+                <p><strong>Description:</strong> ${r.description}</p>
+                <hr>
+                <p><strong>Requested by:</strong> ${r.recipient ? r.recipient.name : 'Unknown'}</p>
+                <p><strong>Email:</strong> ${r.recipient ? r.recipient.email : 'N/A'}</p>
+                <button onclick="approve('${r._id}')" class="btn-approve">Approve Request</button>
+            </div>
+        `).join('');
+
+    } catch (err) {
+        console.error(err);
+        list.innerHTML = "<p>Error loading requests. Please try logging in again.</p>";
+    }
+}
+        async function approve(id) {
+            if(!confirm("Ready to donate this item to this recipient?")) return;
+            try {
+                await AidlyAPI.put(`/donations/approve/${id}`, {});
+                alert("Donation Approved! Thank you for your kindness.");
+                loadRequests(); // Refresh the list
+            } catch (err) {
+                alert("Failed to approve. Try again.");
+            }
+        }
+    </script>
+</body>
+</html>

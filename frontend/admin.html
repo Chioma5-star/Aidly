@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Panel - Aidly</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body onload="loadPendingUsers()">
+    <nav>
+        <h2>Aidly Admin</h2>
+        <button onclick="window.location.href='dashboard.html'">Back to Dashboard</button>
+    </nav>
+
+    <div class="container">
+        <h3>Pending Recipient Verifications</h3>
+        <div id="pendingList" class="admin-grid">
+            <p>Loading pending users...</p>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+        async function loadPendingUsers() {
+            const list = document.getElementById("pendingList");
+            try {
+                // This calls the GET route we discussed earlier
+                const users = await AidlyAPI.get("/auth/pending"); 
+                
+                if (users.length === 0) {
+                    list.innerHTML = "<p>No pending verifications at this time.</p>";
+                    return;
+                }
+
+                list.innerHTML = users.map(u => `
+                    <div class="admin-card">
+                        <h4>${u.name}</h4>
+                        <p>${u.email}</p>
+                        <img src="http://localhost:5000${u.idCardPath}" style="width: 100%; max-width: 300px; border-radius: 8px;">
+                        <br>
+                        <button onclick="verifyUser('${u._id}')" style="background: #22c55e; color: white; margin-top: 10px;">Verify User</button>
+                    </div>
+                `).join('');
+            } catch (err) {
+                list.innerHTML = "<p>Error loading pending users. Ensure you are logged in as an Admin.</p>";
+            }
+        }
+
+        async function verifyUser(userId) {
+            if (!confirm("Are you sure you want to verify this user?")) return;
+            try {
+                await AidlyAPI.post(`/auth/verify/${userId}`, {});
+                alert("User verified successfully!");
+                loadPendingUsers();
+            } catch (err) {
+                alert("Failed to verify user.");
+            }
+        }
+    </script>
+</body>
+</html>

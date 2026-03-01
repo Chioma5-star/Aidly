@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - Aidly</title>
+  <script src="https://js.paystack.co/v1/inline.js"></script>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <header class="header">
+    <div class="logo">💚 Aidly</div>
+    <div class="user-info" style="display: flex; align-items: center;">
+        <div id="pointsBadge" style="display:none; background: #fef3c7; color: #92400e; padding: 4px 12px; border-radius: 20px; font-weight: 700; border: 1px solid #f59e0b; margin-right: 15px;">
+            ⭐ <span id="userPoints">0</span> pts
+        </div>
+
+        <span id="userRoleBadge" style="padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; margin-right: 15px; display: none;">
+            ROLE
+        </span>
+        
+        <span id="welcomeText" style="font-weight: 600; margin-right: 15px;">Welcome, Guest</span>
+        
+        <button class="btn-logout" onclick="logout()">Logout</button>
+    </div>
+</header>
+
+  <main class="container">
+    
+    <!-- ADMIN PANEL -->
+    <div id="adminPanel" class="donation-box" style="display:none; border: 2px solid #2563eb;">
+      <h2>🔐 Admin Verification Panel</h2>
+      <div id="pendingList" style="margin-top: 20px;">
+        <p>Loading pending verifications...</p>
+      </div>
+    </div>
+
+    <!-- RECIPIENT: VERIFY ACCOUNT -->
+    <div id="verificationSection" class="donation-box" style="display:none; border: 2px solid #fbbf24;">
+      <h2>Verify Your Account</h2>
+      <p>Upload Ghana Card to request aid.</p>
+      <input type="file" id="idCardInput" accept="image/*" onchange="storeFile(this)">
+      <button onclick="uploadID()" id="uploadBtn">Upload ID Card</button>
+      <p id="uploadStatus" style="margin-top:10px; font-weight:bold;"></p>
+    </div>
+
+    <!-- RECIPIENT: BROWSE AID -->
+    <div id="recipientDashboard" class="donation-box" style="display:none; max-width: 800px;">
+    <section style="margin-bottom: 40px;">
+        <h2>📋 My Requests</h2>
+        <p style="margin-bottom: 15px; color: #64748b;">Track the status of items you have requested.</p>
+        <div id="myRequestsList" class="donor-grid">
+            <p>Loading your requests...</p>
+        </div>
+    </section>
+
+    <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 30px 0;">
+
+    <section>
+        <h2>🎁 Browse Aid</h2>
+        <p style="margin-bottom: 15px;">Items available from our donors.</p>
+        <button onclick="loadAvailableAid()" style="background: #3b82f6; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold;">
+            Refresh Available Items
+        </button>
+        <div id="availableItemsList" style="margin-top: 15px; min-height: 100px;">
+            </div>
+    </section>
+</div>
+
+    <!-- DONOR: MAKE A DONATION -->
+    <div id="donorSection" class="donation-box" style="display:none;">
+      <h2>Make a Donation</h2>
+      <form onsubmit="event.preventDefault(); donate();">
+        <select id="donationType" onchange="toggleFields()" required>
+          <option value="">Select Type</option>
+          <option value="money">Money</option>
+          <option value="food">Food</option>
+          <option value="clothes">Clothes</option>
+        </select>
+        <div id="amountField" style="display:none;"><input type="number" id="donationAmount" placeholder="Amount (₵)"></div>
+        <div id="descriptionField" style="display:none;"><textarea id="donationDescription" placeholder="Details..."></textarea></div>
+        <button type="submit">Submit Donation</button>
+        <button onclick="window.location.href='leaderboard.html'" style="margin-top: 15px; background: #059669; color: white; width: 100%;">
+    🏆 View Top Donors Leaderboard
+</button>
+      </form>
+    </div>
+
+    <!-- ACTIVITY HISTORY -->
+    <div class="donation-box">
+      <h2>Activity History</h2>
+      <div id="donationHistory" style="margin-top: 15px;">
+        <p style="color: #64748b;">Loading history...</p>
+      </div>
+    </div>
+
+  </main>
+
+  <script src="js/api.js"></script>
+  <script src="js/script.js"></script>
+</body>
+</html>

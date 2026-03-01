@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"><title>Leaderboard - Aidly</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="logo" onclick="window.location.href='dashboard.html'" style="cursor:pointer">💚 Aidly</div>
+        <button class="btn-logout" onclick="window.location.href='dashboard.html'">Back</button>
+    </header>
+    <main class="container">
+        <div class="donation-box">
+            <h2 style="text-align:center">🏆 Top Donors</h2>
+            <div id="leaderboardList">Loading...</div>
+        </div>
+    </main>
+    <script src="js/api.js"></script>
+    <script>
+    
+        async function load() {
+            try {
+                const donors = await AidlyAPI.get("/auth/leaderboard");
+                
+                // If no donors found, show a message
+                if (!donors || donors.length === 0) {
+                    document.getElementById("leaderboardList").innerHTML = "<p style='text-align:center;'>No donors yet. Be the first!</p>";
+                    return;
+                }
+
+                document.getElementById("leaderboardList").innerHTML = donors.map((d, i) => {
+                    let medal = "";
+                    if (i === 0) medal = "🥇";
+                    else if (i === 1) medal = "🥈";
+                    else if (i === 2) medal = "🥉";
+                    else medal = `#${i + 1}`;
+
+                    return `
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding:15px; border-bottom:1px solid #f1f5f9; background: ${i === 0 ? '#fffbeb' : 'white'};">
+                            <span style="font-size: 1.1rem;">
+                                <span style="margin-right: 10px; width: 30px; display: inline-block;">${medal}</span>
+                                <strong>${d.name}</strong>
+                            </span>
+                            <span style="color:#059669; font-weight:bold; background: #ecfdf5; padding: 4px 10px; border-radius: 12px;">
+                                ${d.points || 0} pts
+                            </span>
+                        </div>
+                    `;
+                }).join('');
+            } catch (err) {
+                console.error(err);
+                document.getElementById("leaderboardList").innerHTML = "<p style='color:red; text-align:center;'>Failed to load leaderboard.</p>";
+            }
+        } // Closed the function here!
+
+        load(); // Call the function
+
+    </script>
+</body>
+</html>

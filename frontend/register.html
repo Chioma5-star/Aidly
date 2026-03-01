@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Account - Aidly</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./css/style.css" />
+</head>
+<body>
+
+  <header class="header">
+    <div class="logo">💚 Aidly</div>
+    <div class="nav-auth">
+      <button class="btn-login-outline" onclick="window.location.href='index.html'">Back to Home</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="donation-box">
+      <h2>Create an Account</h2>
+      <p>Join our community today to start connecting help to those who need it most.</p>
+
+      <form id="registerForm">
+        <label for="regName">Full Name</label>
+        <input type="text" id="regName" placeholder="Enter your full name" required />
+
+        <label for="regEmail">Email Address</label>
+        <input type="email" id="regEmail" placeholder="name@email.com" required />
+
+        <label for="regPassword">Password</label>
+        <input type="password" id="regPassword" placeholder="Create a strong password" required />
+
+        <label>I want to join as:</label>
+<div style="margin-bottom: 20px; display: flex; flex-direction: column; gap: 10px; padding: 15px; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
+  <label style="font-weight: 500; display: flex; align-items: center; gap: 10px; margin: 0; cursor: pointer;">
+    <input type="radio" name="role" value="Donor" checked style="width: auto; margin: 0;"> Donor
+  </label>
+  <label style="font-weight: 500; display: flex; align-items: center; gap: 10px; margin: 0; cursor: pointer;">
+    <input type="radio" name="role" value="Recipient" style="width: auto; margin: 0;"> Recipient
+  </label>
+  <label style="font-weight: 500; display: flex; align-items: center; gap: 10px; margin: 0; cursor: pointer;">
+    <input type="radio" name="role" value="Volunteer" style="width: auto; margin: 0;"> Volunteer
+  </label>
+</div>
+
+        <button type="submit">Create Account</button>
+      </form>
+
+      <div style="margin-top: 25px; text-align: center;">
+        <p style="color: #64748b; font-size: 14px;">
+          Already have an account? <a href="login.html">Login here</a>
+        </p>
+      </div>
+    </div>
+  </main>
+
+  <script src="./js/script.js"></script>
+</body>
+</html>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aidly - Connecting Help</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <header class="header">
+    <div class="logo">💚 Aidly</div>
+    <div class="nav-auth">
+      <button class="btn-login-outline" onclick="goToLogin()">Login</button>
+      <button class="btn-get-started" onclick="goToRegister()">Get Started</button>
+    </div>
+  </header>
+
+  <section class="hero">
+    <h1>Connecting Help to Those Who Need It</h1>
+    <p>A comprehensive donation management platform focused on reducing poverty and hunger through coordinated giving.</p>
+    <div class="hero-btns">
+      <button class="btn-primary" onclick="goToLogin()">Donate Now</button>
+      <button class="btn-secondary" onclick="volunteer()">Volunteer</button>
+    </div>
+  </section>
+
+  <section class="stats-bar">
+    <div class="stat-item">
+      <h2 id="totalMeals">0</h2>
+      <p>Items Donated</p>
+    </div>
+    <div class="stat-item">
+      <h2 id="totalFamilies">0</h2>
+      <p>People Helped</p>
+    </div>
+    <div class="stat-item">
+      <h2 id="totalVolunteers">0</h2>
+      <p>Active Volunteers</p>
+    </div>
+  </section>
+
+  <section class="how-it-works">
+    <h2 class="section-title" style="margin-bottom: 40px;">How It Works</h2>
+    <div class="steps-grid">
+      <div class="step-card">
+        <div class="step-icon" style="font-size: 40px; margin-bottom: 20px;">💚</div>
+        <h3>1. Make a Donation</h3>
+        <p>Choose to donate food, clothes, or funds through our easy-to-use platform.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-icon" style="font-size: 40px; margin-bottom: 20px;">👥</div>
+        <h3>2. Connect Recipients</h3>
+        <p>Verified recipients are matched with donations based on their needs.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-icon" style="font-size: 40px; margin-bottom: 20px;">📈</div>
+        <h3>3. Track Impact</h3>
+        <p>See real-time updates on how your donations are making a difference.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta-section">
+    <div style="font-size: 40px; margin-bottom: 20px;">🏅</div>
+    <h2>Start Making a Difference Today</h2>
+    <p>Join our community of donors, volunteers, and recipients working together to reduce poverty and hunger.</p>
+    <button class="btn-white" onclick="goToRegister()">Join Aidly</button>
+  </section>
+
+  <footer class="footer">
+    <div class="footer-content">
+      <div class="footer-brand">
+        <h3>💚 Aidly</h3>
+        <p>Connecting help to those who need it.</p>
+      </div>
+
+      <div class="footer-contact">
+        <h4>Contact</h4>
+        <p>support@aidly.org</p>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <p>&copy; 2026 Aidly. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="js/script.js"></script>
+</body>
+</html>

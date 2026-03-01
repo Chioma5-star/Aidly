@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Aidly</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./css/style.css" />
+</head>
+<body>
+
+  <header class="header">
+    <div class="logo">💚 Aidly</div>
+    <div class="nav-auth">
+      <button class="btn-login-outline" onclick="window.location.href='index.html'">Back to Home</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="donation-box">
+      <h2>Login</h2>
+      <p>Welcome back! Please enter your details to access your dashboard.</p>
+
+      <form id="loginForm">
+        <label for="loginEmail">Email Address</label>
+        <input type="email" id="loginEmail" placeholder="e.g. name@email.com" required />
+
+        <label for="loginPassword">Password</label>
+        <input type="password" id="loginPassword" placeholder="Enter your password" required />
+
+        <button type="submit">Login</button>
+      </form>
+
+      <p id="loginMessage" style="text-align: center; margin-top: 15px; color: #ef4444; font-weight: 600;"></p>
+
+      <div style="margin-top: 25px; text-align: center;">
+        <p style="color: #64748b; font-size: 14px;">
+          Don't have an account? <a href="register.html">Sign up</a>
+        </p>
+      </div>
+    </div>
+  </main>
+
+  <script src="./js/script.js"></script>
+</body>
+</html>
