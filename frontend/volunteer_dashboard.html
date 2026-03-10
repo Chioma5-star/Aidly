@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Volunteer Dashboard - Aidly</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .vol-nav {
+            background: rgba(255,255,255,0.9);
+            backdrop-filter: blur(10px);
+            padding: 16px 8%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e2e8f0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .vol-nav .logo { font-size: 24px; font-weight: 800; color: #166534; }
+        .vol-nav .nav-right { display: flex; align-items: center; gap: 12px; }
+        .vol-nav .welcome { font-weight: 600; color: #475569; font-size: 14px; }
+        .vol-nav .role-badge {
+            background: #fef3c7; color: #92400e;
+            padding: 4px 12px; border-radius: 20px;
+            font-size: 12px; font-weight: 700;
+        }
+        .vol-nav a {
+            position: relative; text-decoration: none;
+            font-size: 22px; line-height: 1;
+        }
+        .vol-nav .notif-badge {
+            display: none; position: absolute; top: -6px; right: -6px;
+            background: #ef4444; color: white; font-size: 10px;
+            font-weight: 800; padding: 2px 5px; border-radius: 20px;
+            min-width: 16px; text-align: center;
+        }
+        .logout-btn {
+            background: #fef2f2 !important; color: #ef4444 !important;
+            border: 1px solid #fecaca !important; padding: 8px 16px !important;
+            border-radius: 10px !important; font-weight: 600 !important;
+            font-size: 14px !important; width: auto !important; cursor: pointer !important;
+        }
+        .vol-wrapper { max-width: 800px; margin: 0 auto; padding: 32px 20px; }
+
+        .pending-banner {
+            background: #fffbeb; border: 2px solid #fbbf24;
+            border-radius: 16px; padding: 30px; margin-bottom: 24px;
+        }
+        .pending-banner .icon { font-size: 48px; margin-bottom: 12px; text-align: center; }
+        .pending-banner h3 { font-size: 20px; font-weight: 700; color: #92400e; margin-bottom: 8px; text-align: center; }
+        .pending-banner p { color: #78350f; font-size: 15px; text-align: center; }
+
+        .vol-input {
+            width: 100%; padding: 12px; border-radius: 10px;
+            border: 1px solid #fbbf24; margin-bottom: 16px;
+            font-size: 14px; box-sizing: border-box; font-family: 'Inter', sans-serif;
+        }
+        .vol-label { font-weight: 600; font-size: 14px; display: block; margin-bottom: 6px; color: #1e293b; }
+        .btn-submit-profile {
+            width: 100%; background: #22c55e; color: white;
+            border: none; padding: 14px; border-radius: 10px;
+            font-weight: 700; font-size: 15px; cursor: pointer; font-family: 'Inter', sans-serif;
+        }
+        .btn-submit-profile:hover { filter: brightness(1.05); }
+
+        .task-card {
+            background: white; border: 1px solid #e2e8f0;
+            border-radius: 16px; padding: 20px; margin-bottom: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            display: flex; justify-content: space-between; align-items: flex-start; gap: 16px;
+        }
+        .task-card.accepted { border-left: 4px solid #22c55e; background: #f0fdf4; }
+        .task-card.available { border-left: 4px solid #3b82f6; }
+
+        .task-info h4 { font-size: 16px; font-weight: 700; color: #0f172a; margin-bottom: 4px; }
+        .task-info p { font-size: 14px; color: #64748b; margin-bottom: 4px; }
+        .task-info .task-meta { font-size: 12px; color: #94a3b8; }
+        .task-actions { display: flex; flex-direction: column; gap: 8px; min-width: 140px; }
+
+        .btn-accept {
+            background: #22c55e !important; color: white !important;
+            border: none !important; padding: 10px 16px !important;
+            border-radius: 10px !important; cursor: pointer !important;
+            font-weight: 700 !important; font-size: 13px !important;
+            width: 100% !important; text-align: center !important;
+        }
+        .btn-deliver {
+            background: #3b82f6 !important; color: white !important;
+            border: none !important; padding: 10px 16px !important;
+            border-radius: 10px !important; cursor: pointer !important;
+            font-weight: 700 !important; font-size: 13px !important;
+            width: 100% !important; text-align: center !important;
+        }
+
+        .status-pill { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; }
+        .pill-delivering { background: #fef3c7; color: #92400e; }
+        .pill-delivered { background: #dcfce7; color: #166534; }
+
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .section-title { font-size: 18px; font-weight: 700; color: #0f172a; }
+        .section-subtitle { font-size: 14px; color: #64748b; margin-bottom: 16px; }
+        .divider { border: 0; border-top: 1px solid #e2e8f0; margin: 28px 0; }
+
+        .empty-state {
+            text-align: center; padding: 32px 20px; color: #94a3b8; font-size: 14px;
+            background: white; border-radius: 12px; border: 1px dashed #e2e8f0;
+        }
+        .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 28px; }
+        .mini-stat { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; text-align: center; }
+        .mini-stat .val { font-size: 24px; font-weight: 800; color: #0f172a; }
+        .mini-stat .lbl { font-size: 12px; color: #64748b; margin-top: 2px; }
+    </style>
+</head>
+<body>
+
+    <nav class="vol-nav">
+        <div class="logo">💚 Aidly</div>
+        <div class="nav-right">
+            <span class="welcome" id="welcomeText">Welcome!</span>
+            <span class="role-badge">🚚 Volunteer</span>
+            <a href="notifications.html" title="Notifications">
+                🔔
+                <span class="notif-badge" id="notifBadge">0</span>
+            </a>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+    </nav>
+
+    <div class="vol-wrapper">
+
+        <!-- STEP 1: Complete profile (new volunteers) -->
+        <div id="profileForm" class="pending-banner" style="display:none;">
+            <div style="font-size:36px; text-align:center; margin-bottom:12px;">🚚</div>
+            <h3>Complete Your Volunteer Profile</h3>
+            <p style="margin-bottom:24px;">Tell us a bit more before we review your application.</p>
+            <label class="vol-label">Phone Number</label>
+            <input type="text" id="volPhone" class="vol-input" placeholder="e.g. 0241234567">
+            <label class="vol-label">Delivery Area</label>
+            <input type="text" id="volArea" class="vol-input" placeholder="e.g. Tantra Hills, Accra">
+            <button class="btn-submit-profile" onclick="submitVolunteerProfile()">Submit Application →</button>
+        </div>
+
+        <!-- STEP 2: Pending admin approval -->
+        <div id="pendingBanner" class="pending-banner" style="display:none;">
+            <div class="icon">⏳</div>
+            <h3>Application Under Review</h3>
+            <p>Your volunteer application is being reviewed by the admin. You'll be notified once approved and can start accepting delivery tasks.</p>
+        </div>
+
+        <!-- STEP 3: Active volunteer dashboard -->
+        <div id="volunteerContent" style="display:none;">
+            <div class="stats-row">
+                <div class="mini-stat"><div class="val" id="statAvailable">-</div><div class="lbl">Available Tasks</div></div>
+                <div class="mini-stat"><div class="val" id="statMyTasks">-</div><div class="lbl">My Active Tasks</div></div>
+                <div class="mini-stat"><div class="val" id="statCompleted">-</div><div class="lbl">Completed</div></div>
+            </div>
+
+            <div class="section-header">
+                <p class="section-title">🚚 My Active Tasks</p>
+                <button onclick="loadAll()" style="background:#f1f5f9;border:1px solid #e2e8f0;padding:8px 14px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;width:auto;">↻ Refresh</button>
+            </div>
+            <p class="section-subtitle">Donations you have accepted to deliver.</p>
+            <div id="myTasksList"><p class="empty-state">Loading...</p></div>
+
+            <hr class="divider">
+
+            <p class="section-title" style="margin-bottom:8px;">📦 Available Delivery Tasks</p>
+            <p class="section-subtitle">Approved donations waiting for a volunteer to deliver.</p>
+            <div id="availableTasksList"><p class="empty-state">Loading...</p></div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "http://127.0.0.1:5000/api";
+        const token = localStorage.getItem("aidlyToken");
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = "login.html";
+        }
+
+        // Guard — check token exists and role is volunteer
+        const localUser = JSON.parse(localStorage.getItem("aidlyUser") || "{}");
+        if (!token || localUser.role?.toLowerCase() !== "volunteer") {
+            window.location.href = "login.html";
+        }
+
+        // Always fetch fresh user data from server so approval status is current
+        async function initDashboard() {
+            try {
+                const res = await fetch(`${API_URL}/auth/me`, {
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+
+                if (!res.ok) { window.location.href = "login.html"; return; }
+
+                const freshUser = await res.json();
+
+                // Update localStorage with latest server data
+                localStorage.setItem("aidlyUser", JSON.stringify({ ...freshUser, id: freshUser._id }));
+
+                document.getElementById("welcomeText").textContent = `Welcome, ${freshUser.name}!`;
+
+                // 3-step flow — check approval FIRST
+                if (freshUser.isVerified) {
+                    document.getElementById("volunteerContent").style.display = "block";
+                    loadAll();
+                } else if (!freshUser.phone || !freshUser.area) {
+                    document.getElementById("profileForm").style.display = "block";
+                } else {
+                    document.getElementById("pendingBanner").style.display = "block";
+                }
+
+            } catch {
+                alert("Connection error. Is your backend running?");
+            }
+        }
+
+        initDashboard();
+
+        // Notification badge
+        async function loadNotifCount() {
+            try {
+                const res = await fetch(`${API_URL}/notifications/unread-count`, {
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+                const data = await res.json();
+                const badge = document.getElementById("notifBadge");
+                if (data.count > 0) {
+                    badge.textContent = data.count;
+                    badge.style.display = "inline-block";
+                }
+            } catch {}
+        }
+        loadNotifCount();
+
+        // Submit volunteer profile
+        async function submitVolunteerProfile() {
+            const phone = document.getElementById("volPhone").value.trim();
+            const area = document.getElementById("volArea").value.trim();
+            if (!phone || !area) return alert("Please fill in both fields!");
+
+            try {
+                const res = await fetch(`${API_URL}/auth/volunteer-profile`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+                    body: JSON.stringify({ phone, area })
+                });
+
+                if (res.ok) {
+                    document.getElementById("profileForm").style.display = "none";
+                    document.getElementById("pendingBanner").style.display = "block";
+                    // Update localStorage
+                    const u = JSON.parse(localStorage.getItem("aidlyUser") || "{}");
+                    localStorage.setItem("aidlyUser", JSON.stringify({ ...u, phone, area }));
+                } else {
+                    alert("Failed to save profile. Try again.");
+                }
+            } catch { alert("Connection error. Is your backend running?"); }
+        }
+
+        async function loadAll() {
+            await Promise.all([loadMyTasks(), loadAvailableTasks()]);
+        }
+
+        async function loadMyTasks() {
+            const list = document.getElementById("myTasksList");
+            try {
+                const res = await fetch(`${API_URL}/donations/my-tasks`, {
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+                const tasks = await res.json();
+                document.getElementById("statMyTasks").textContent = tasks.filter(t => t.status !== "Delivered").length;
+                document.getElementById("statCompleted").textContent = tasks.filter(t => t.status === "Delivered").length;
+
+                if (!tasks.length) {
+                    list.innerHTML = "<p class='empty-state'>No active tasks yet. Accept a task below!</p>";
+                    return;
+                }
+
+                list.innerHTML = tasks.map(t => `
+                    <div class="task-card accepted">
+                        <div class="task-info">
+                            <h4>📦 ${(t.type || 'ITEM').toUpperCase()}</h4>
+                            <p>${t.description || 'No description'}</p>
+                            <p><strong>Recipient:</strong> ${t.recipientId?.name || 'Unknown'} · ${t.recipientId?.email || ''}</p>
+                            <p><strong>Donor:</strong> ${t.user?.name || 'Unknown'}</p>
+                            <span class="task-meta">Accepted on ${new Date(t.updatedAt).toLocaleDateString()}</span>
+                        </div>
+                        <div class="task-actions">
+                            <span class="status-pill pill-delivering">🚚 Delivering</span>
+                            ${t.status === "Delivering" ? `
+                                <button class="btn-deliver" onclick="markDelivered('${t._id}')">✅ Mark Delivered</button>
+                            ` : `<span class="status-pill pill-delivered">✅ Delivered</span>`}
+                        </div>
+                    </div>
+                `).join('');
+            } catch {
+                list.innerHTML = "<p class='empty-state' style='color:red;'>Error loading tasks.</p>";
+            }
+        }
+
+        async function loadAvailableTasks() {
+            const list = document.getElementById("availableTasksList");
+            try {
+                const res = await fetch(`${API_URL}/donations/available-tasks`, {
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+                const tasks = await res.json();
+                document.getElementById("statAvailable").textContent = tasks.length;
+
+                if (!tasks.length) {
+                    list.innerHTML = "<p class='empty-state'>No tasks available right now. Check back soon!</p>";
+                    return;
+                }
+
+                list.innerHTML = tasks.map(t => `
+                    <div class="task-card available">
+                        <div class="task-info">
+                            <h4>📦 ${(t.type || 'ITEM').toUpperCase()}</h4>
+                            <p>${t.description || 'No description'}</p>
+                            <p><strong>Donor:</strong> ${t.user?.name || 'Unknown'}</p>
+                            <span class="task-meta">Posted ${new Date(t.createdAt).toLocaleDateString()}</span>
+                        </div>
+                        <div class="task-actions">
+                            <button class="btn-accept" onclick="acceptTask('${t._id}')">🚚 Accept Task</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch {
+                list.innerHTML = "<p class='empty-state' style='color:red;'>Error loading tasks.</p>";
+            }
+        }
+
+        async function acceptTask(id) {
+            if (!confirm("Accept this delivery task?")) return;
+            try {
+                const res = await fetch(`${API_URL}/donations/accept-task/${id}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    alert("✅ Task accepted! Go pick it up and deliver it.");
+                    loadAll();
+                } else {
+                    const d = await res.json();
+                    alert(d.message || "Failed to accept task.");
+                }
+            } catch { alert("Connection error."); }
+        }
+
+        async function markDelivered(id) {
+            if (!confirm("Mark this item as delivered?")) return;
+            try {
+                const res = await fetch(`${API_URL}/donations/volunteer-delivered/${id}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    alert("🎉 Delivery confirmed! Thank you for your service.");
+                    loadAll();
+                } else {
+                    const d = await res.json();
+                    alert(d.message || "Failed to update.");
+                }
+            } catch { alert("Connection error."); }
+        }
+    </script>
+</body>
+</html>

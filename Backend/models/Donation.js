@@ -1,19 +1,31 @@
 import mongoose from "mongoose";
 
 const donationSchema = new mongoose.Schema({
-  user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-  // 1. ADD 'recipient' field so the DB knows who requested it
-  recipient: { type: mongoose.Schema.Types.ObjectId, ref: "User" }, 
-  type: { type: String, enum: ["money", "clothes", "food", "books", "other"], required: true },
-  amount: { type: Number },
-  description: { type: String },
-  // 2. ADD 'available' and 'pending' to the enum
-  status: { 
-    type: String, 
-    enum: ["available", "pending", "Pending", "Approved", "Delivered"], 
-    default: "available" 
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
   },
-  transactionReference: { type: String, sparse: true }
+  recipientId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
+  volunteerId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
+  type: { type: String, required: true },
+  description: { type: String },
+  amount: { type: Number },
+  transactionReference: { type: String },
+  status: {
+    type: String,
+    enum: ['available', 'Requested', 'Approved', 'Delivering', 'Delivered', 'Completed', 'Pending'],
+    default: 'available'
+  }
+
 }, { timestamps: true });
 
 export default mongoose.model("Donation", donationSchema);

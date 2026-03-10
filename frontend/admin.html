@@ -2,59 +2,431 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Admin Panel - Aidly</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Aidly</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        .admin-nav {
+            background: rgba(255,255,255,0.9);
+            backdrop-filter: blur(10px);
+            padding: 16px 8%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e2e8f0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .admin-nav .logo { font-size: 24px; font-weight: 800; color: #166534; }
+        .admin-nav .nav-right { display: flex; gap: 10px; align-items: center; }
+        .admin-nav button {
+            background: #f1f5f9; color: #1e293b; border: 1px solid #e2e8f0;
+            padding: 10px 20px; border-radius: 12px; cursor: pointer;
+            font-weight: 600; font-size: 14px; width: auto;
+        }
+        .admin-nav button:hover { background: #e2e8f0; }
+        .admin-nav .btn-danger { background: #fef2f2; color: #ef4444; border-color: #fecaca; }
+        .admin-nav .btn-danger:hover { background: #fee2e2; }
+
+        .tabs {
+            display: flex;
+            gap: 8px;
+            padding: 24px 8% 0;
+            border-bottom: 1px solid #e2e8f0;
+            background: white;
+            flex-wrap: wrap;
+        }
+        .tab-btn {
+            padding: 10px 20px; border-radius: 10px 10px 0 0;
+            border: 1px solid transparent; border-bottom: none;
+            background: #f8fafc; color: #64748b;
+            cursor: pointer; font-weight: 600; font-size: 14px;
+            transition: 0.2s; width: auto;
+        }
+        .tab-btn.active {
+            background: white; color: #166534;
+            border-color: #e2e8f0; border-bottom: 2px solid white;
+            margin-bottom: -1px;
+        }
+        .tab-btn:hover:not(.active) { background: #f1f5f9; }
+
+        .tab-content { display: none; padding: 32px 8%; }
+        .tab-content.active { display: block; }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+        .stat-card {
+            background: white; border: 1px solid #e2e8f0;
+            border-radius: 16px; padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            text-align: center;
+        }
+        .stat-icon { font-size: 28px; margin-bottom: 8px; }
+        .stat-value { font-size: 28px; font-weight: 800; color: #0f172a; }
+        .stat-label { font-size: 13px; color: #64748b; margin-top: 4px; font-weight: 500; }
+
+        .section-title { font-size: 18px; font-weight: 700; color: #0f172a; margin-bottom: 16px; }
+
+        .verify-card {
+            background: white; border: 1px solid #fbbf24;
+            border-radius: 16px; padding: 20px; margin-bottom: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        .verify-card h4 { margin: 0 0 4px; font-size: 16px; }
+        .verify-card p { color: #64748b; font-size: 14px; margin: 0 0 12px; }
+        .verify-card img {
+            width: 100%; max-width: 280px; border-radius: 10px;
+            border: 1px solid #e2e8f0; margin-bottom: 12px; display: block;
+        }
+        .btn-verify {
+            background: #22c55e !important; color: white !important;
+            border: none !important; padding: 10px 20px !important;
+            border-radius: 10px !important; cursor: pointer !important;
+            font-weight: 700 !important; width: 100% !important;
+            font-size: 14px !important;
+        }
+
+        /* Volunteer card — amber border instead of yellow */
+        .volunteer-card {
+            background: white; border: 1px solid #f59e0b;
+            border-radius: 16px; padding: 20px; margin-bottom: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        .volunteer-card h4 { margin: 0 0 4px; font-size: 16px; }
+        .volunteer-card p { color: #64748b; font-size: 14px; margin: 0 0 8px; }
+
+        .data-table { width: 100%; border-collapse: collapse; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+        .data-table th { background: #f8fafc; padding: 12px 16px; text-align: left; font-size: 13px; color: #64748b; font-weight: 700; border-bottom: 1px solid #e2e8f0; }
+        .data-table td { padding: 12px 16px; font-size: 14px; color: #1e293b; border-bottom: 1px solid #f1f5f9; }
+        .data-table tr:last-child td { border-bottom: none; }
+        .data-table tr:hover td { background: #f8fafc; }
+
+        .role-badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+        .role-donor { background: #dbeafe; color: #1d4ed8; }
+        .role-recipient { background: #dcfce7; color: #166534; }
+        .role-admin { background: #ede9fe; color: #6d28d9; }
+        .role-volunteer { background: #fef3c7; color: #92400e; }
+
+        .status-badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+        .status-available { background: #dcfce7; color: #166534; }
+        .status-requested { background: #fef3c7; color: #92400e; }
+        .status-approved { background: #dbeafe; color: #1d4ed8; }
+        .status-delivered { background: #f3f4f6; color: #374151; }
+        .status-completed { background: #ede9fe; color: #6d28d9; }
+
+        .empty-state { text-align: center; padding: 40px; color: #94a3b8; font-size: 14px; }
+
+        .search-bar {
+            width: 100%; padding: 10px 16px; border-radius: 12px;
+            border: 1px solid #e2e8f0; background: #f8fafc;
+            font-size: 14px; margin-bottom: 16px; box-sizing: border-box;
+        }
+    </style>
 </head>
-<body onload="loadPendingUsers()">
-    <nav>
-        <h2>Aidly Admin</h2>
-        <button onclick="window.location.href='dashboard.html'">Back to Dashboard</button>
+<body>
+
+    <!-- NAV -->
+    <nav class="admin-nav">
+        <div class="logo">💚 Aidly Admin</div>
+        <div class="nav-right">
+            <span id="adminName" style="font-weight:600; color:#64748b; font-size:14px;"></span>
+            <button class="btn-danger" onclick="logout()">Logout</button>
+        </div>
     </nav>
 
-    <div class="container">
-        <h3>Pending Recipient Verifications</h3>
-        <div id="pendingList" class="admin-grid">
-            <p>Loading pending users...</p>
-        </div>
+    <!-- TABS -->
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('overview', this)">📊 Overview</button>
+        <button class="tab-btn" onclick="switchTab('verify', this)">🪪 Verify Users <span id="pendingCount" style="background:#ef4444;color:white;border-radius:20px;padding:1px 7px;font-size:11px;margin-left:4px;display:none;">0</span></button>
+        <button class="tab-btn" onclick="switchTab('volunteers', this)">🚚 Volunteers <span id="volCount" style="background:#f59e0b;color:white;border-radius:20px;padding:1px 7px;font-size:11px;margin-left:4px;display:none;">0</span></button>
+        <button class="tab-btn" onclick="switchTab('users', this)">👥 All Users</button>
+        <button class="tab-btn" onclick="switchTab('donations', this)">📦 All Donations</button>
     </div>
 
-    <script src="js/api.js"></script>
+    <!-- OVERVIEW TAB -->
+    <div id="tab-overview" class="tab-content active">
+        <div class="stats-grid">
+            <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-value" id="statUsers">-</div><div class="stat-label">Total Users</div></div>
+            <div class="stat-card"><div class="stat-icon">🎁</div><div class="stat-value" id="statDonations">-</div><div class="stat-label">Total Donations</div></div>
+            <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-value" id="statDelivered">-</div><div class="stat-label">Delivered</div></div>
+            <div class="stat-card"><div class="stat-icon">⏳</div><div class="stat-value" id="statPending">-</div><div class="stat-label">Pending Verify</div></div>
+            <div class="stat-card"><div class="stat-icon">🚚</div><div class="stat-value" id="statVolunteers">-</div><div class="stat-label">Pending Volunteers</div></div>
+        </div>
+        <p class="section-title">Recent Donations</p>
+        <div id="recentDonations"><p class="empty-state">Loading...</p></div>
+    </div>
+
+    <!-- VERIFY TAB -->
+    <div id="tab-verify" class="tab-content">
+        <p class="section-title">🪪 Pending Recipient Verifications</p>
+        <div id="pendingList"><p class="empty-state">Loading...</p></div>
+    </div>
+
+    <!-- VOLUNTEERS TAB -->
+    <div id="tab-volunteers" class="tab-content">
+        <p class="section-title">🚚 Pending Volunteer Applications</p>
+        <p style="color:#64748b; font-size:14px; margin-bottom:20px;">Review and approve volunteers before they can accept delivery tasks.</p>
+        <div id="volunteerList"><p class="empty-state">Loading...</p></div>
+    </div>
+
+    <!-- USERS TAB -->
+    <div id="tab-users" class="tab-content">
+        <p class="section-title">👥 All Users</p>
+        <input class="search-bar" type="text" id="userSearch" placeholder="🔍 Search by name or email..." oninput="filterUsers()">
+        <div id="usersTable"><p class="empty-state">Loading...</p></div>
+    </div>
+
+    <!-- DONATIONS TAB -->
+    <div id="tab-donations" class="tab-content">
+        <p class="section-title">📦 All Donations</p>
+        <input class="search-bar" type="text" id="donationSearch" placeholder="🔍 Search by type or status..." oninput="filterDonations()">
+        <div id="donationsTable"><p class="empty-state">Loading...</p></div>
+    </div>
+
     <script>
+        const API_URL = "http://127.0.0.1:5000/api";
+        let allUsers = [];
+        let allDonations = [];
+
+        const currentUser = JSON.parse(localStorage.getItem("aidlyUser") || "{}");
+        if (!currentUser || currentUser.role?.toLowerCase() !== "admin") {
+            alert("Access denied. Admins only.");
+            window.location.href = "dashboard.html";
+        }
+        document.getElementById("adminName").textContent = currentUser.name || "Admin";
+
+        function logout() {
+            localStorage.removeItem("aidlyToken");
+            localStorage.removeItem("aidlyUser");
+            window.location.href = "login.html";
+        }
+
+        function switchTab(tab, btn) {
+            document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+            document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+            document.getElementById(`tab-${tab}`).classList.add("active");
+            btn.classList.add("active");
+        }
+
+        function token() { return localStorage.getItem("aidlyToken"); }
+
+        async function loadAll() {
+            await Promise.all([loadPendingUsers(), loadPendingVolunteers(), loadUsers(), loadDonations()]);
+        }
+
+        // ── PENDING RECIPIENT VERIFICATIONS ───────────────────
         async function loadPendingUsers() {
             const list = document.getElementById("pendingList");
             try {
-                // This calls the GET route we discussed earlier
-                const users = await AidlyAPI.get("/auth/pending"); 
-                
-                if (users.length === 0) {
-                    list.innerHTML = "<p>No pending verifications at this time.</p>";
+                const res = await fetch(`${API_URL}/auth/pending-verifications`, {
+                    headers: { "Authorization": `Bearer ${token()}` }
+                });
+                const users = await res.json();
+
+                const badge = document.getElementById("pendingCount");
+                document.getElementById("statPending").textContent = users.length || 0;
+                if (users.length > 0) { badge.textContent = users.length; badge.style.display = "inline"; }
+
+                if (!Array.isArray(users) || users.length === 0) {
+                    list.innerHTML = "<p class='empty-state'>✅ No pending verifications right now.</p>";
                     return;
                 }
 
                 list.innerHTML = users.map(u => `
-                    <div class="admin-card">
+                    <div class="verify-card">
                         <h4>${u.name}</h4>
-                        <p>${u.email}</p>
-                        <img src="http://localhost:5000${u.idCardPath}" style="width: 100%; max-width: 300px; border-radius: 8px;">
-                        <br>
-                        <button onclick="verifyUser('${u._id}')" style="background: #22c55e; color: white; margin-top: 10px;">Verify User</button>
+                        <p>📧 ${u.email} &nbsp;|&nbsp; 📅 Applied: ${new Date(u.createdAt).toLocaleDateString()}</p>
+
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px; background:#f8fafc; border-radius:10px; padding:14px;">
+                            <div><span style="font-size:12px;color:#94a3b8;font-weight:700;">DEPENDENTS</span><br><strong>${u.dependents ?? '—'}</strong></div>
+                            <div><span style="font-size:12px;color:#94a3b8;font-weight:700;">PRIMARY NEED</span><br><strong>${u.specificNeed || '—'}</strong></div>
+                            <div><span style="font-size:12px;color:#94a3b8;font-weight:700;">INCOME RANGE</span><br><strong>${u.incomeRange || '—'}</strong></div>
+                            <div style="grid-column:1/-1;"><span style="font-size:12px;color:#94a3b8;font-weight:700;">SITUATION</span><br><span style="font-size:14px;color:#1e293b;">${u.situation || '—'}</span></div>
+                        </div>
+
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;">
+                            <div>
+                                <p style="font-size:12px;font-weight:700;color:#64748b;margin-bottom:6px;">🪪 GHANA CARD</p>
+                                <img src="http://127.0.0.1:5000${u.idCardPath}"
+                                     style="width:100%;border-radius:8px;border:1px solid #e2e8f0;"
+                                     onerror="this.outerHTML='<p style=color:#ef4444;font-size:13px;>Image not found</p>'">
+                            </div>
+                            <div>
+                                <p style="font-size:12px;font-weight:700;color:#64748b;margin-bottom:6px;">📄 PROOF OF NEED</p>
+                                ${u.proofOfNeedPath ? `<img src="http://127.0.0.1:5000${u.proofOfNeedPath}"
+                                     style="width:100%;border-radius:8px;border:1px solid #e2e8f0;"
+                                     onerror="this.outerHTML='<p style=color:#ef4444;font-size:13px;>Image not found</p>'">` : '<p style="color:#94a3b8;font-size:13px;">Not uploaded</p>'}
+                            </div>
+                        </div>
+
+                        <button class="btn-verify" onclick="verifyUser('${u._id}')">✅ Verify This User</button>
                     </div>
                 `).join('');
-            } catch (err) {
-                list.innerHTML = "<p>Error loading pending users. Ensure you are logged in as an Admin.</p>";
+            } catch {
+                list.innerHTML = "<p class='empty-state' style='color:red;'>Error loading verifications.</p>";
+            }
+        }
+
+        // ── PENDING VOLUNTEER APPLICATIONS ────────────────────
+        async function loadPendingVolunteers() {
+            const list = document.getElementById("volunteerList");
+            try {
+                const res = await fetch(`${API_URL}/auth/pending-volunteers`, {
+                    headers: { "Authorization": `Bearer ${token()}` }
+                });
+                const volunteers = await res.json();
+
+                const badge = document.getElementById("volCount");
+                document.getElementById("statVolunteers").textContent = volunteers.length || 0;
+                if (volunteers.length > 0) { badge.textContent = volunteers.length; badge.style.display = "inline"; }
+
+                if (!Array.isArray(volunteers) || volunteers.length === 0) {
+                    list.innerHTML = "<p class='empty-state'>✅ No pending volunteer applications.</p>";
+                    return;
+                }
+
+                list.innerHTML = volunteers.map(v => `
+                    <div class="volunteer-card">
+                        <h4>🚚 ${v.name}</h4>
+                        <p>📧 ${v.email}</p>
+                        <p>📅 Applied: ${new Date(v.createdAt).toLocaleDateString()}</p>
+                        <button class="btn-verify" onclick="verifyUser('${v._id}')">✅ Approve Volunteer</button>
+                    </div>
+                `).join('');
+            } catch {
+                list.innerHTML = "<p class='empty-state' style='color:red;'>Error loading volunteers.</p>";
             }
         }
 
         async function verifyUser(userId) {
-            if (!confirm("Are you sure you want to verify this user?")) return;
+            if (!confirm("Approve this user?")) return;
             try {
-                await AidlyAPI.post(`/auth/verify/${userId}`, {});
-                alert("User verified successfully!");
-                loadPendingUsers();
-            } catch (err) {
-                alert("Failed to verify user.");
+                const res = await fetch(`${API_URL}/auth/verify-user/${userId}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token()}` }
+                });
+                if (res.ok) {
+                    alert("✅ User approved!");
+                    loadAll();
+                } else {
+                    const d = await res.json();
+                    alert(d.message || "Failed.");
+                }
+            } catch { alert("Connection error."); }
+        }
+
+        // ── ALL USERS ──────────────────────────────────────────
+        async function loadUsers() {
+            try {
+                const res = await fetch(`${API_URL}/auth/all-users`, {
+                    headers: { "Authorization": `Bearer ${token()}` }
+                });
+                allUsers = await res.json();
+                document.getElementById("statUsers").textContent = allUsers.length || 0;
+                renderUsers(allUsers);
+            } catch {
+                document.getElementById("usersTable").innerHTML = "<p class='empty-state' style='color:red;'>Error loading users.</p>";
             }
         }
+
+        function renderUsers(users) {
+            if (!users.length) {
+                document.getElementById("usersTable").innerHTML = "<p class='empty-state'>No users found.</p>";
+                return;
+            }
+            document.getElementById("usersTable").innerHTML = `
+                <table class="data-table">
+                    <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Points</th><th>Verified</th><th>Joined</th></tr></thead>
+                    <tbody>${users.map(u => `
+                        <tr>
+                            <td><strong>${u.name}</strong></td>
+                            <td style="color:#64748b;">${u.email}</td>
+                            <td><span class="role-badge role-${(u.role||'').toLowerCase()}">${u.role || 'N/A'}</span></td>
+                            <td><span style="color:#059669;font-weight:700;">⭐ ${u.points || 0}</span></td>
+                            <td>${u.isVerified ? '✅' : '❌'}</td>
+                            <td style="color:#94a3b8;">${new Date(u.createdAt).toLocaleDateString()}</td>
+                        </tr>
+                    `).join('')}</tbody>
+                </table>`;
+        }
+
+        function filterUsers() {
+            const q = document.getElementById("userSearch").value.toLowerCase();
+            renderUsers(allUsers.filter(u => u.name?.toLowerCase().includes(q) || u.email?.toLowerCase().includes(q)));
+        }
+
+        // ── ALL DONATIONS ──────────────────────────────────────
+        async function loadDonations() {
+            try {
+                const res = await fetch(`${API_URL}/donations/all`, {
+                    headers: { "Authorization": `Bearer ${token()}` }
+                });
+                allDonations = await res.json();
+                const delivered = allDonations.filter(d => d.status === "Delivered").length;
+                document.getElementById("statDonations").textContent = allDonations.length || 0;
+                document.getElementById("statDelivered").textContent = delivered;
+                renderDonations(allDonations);
+                renderRecentDonations(allDonations.slice(0, 5));
+            } catch {
+                document.getElementById("donationsTable").innerHTML = "<p class='empty-state' style='color:red;'>Error loading donations.</p>";
+            }
+        }
+
+        function renderDonations(donations) {
+            if (!donations.length) {
+                document.getElementById("donationsTable").innerHTML = "<p class='empty-state'>No donations found.</p>";
+                return;
+            }
+            document.getElementById("donationsTable").innerHTML = `
+                <table class="data-table">
+                    <thead><tr><th>Type</th><th>Description</th><th>Donor</th><th>Status</th><th>Date</th></tr></thead>
+                    <tbody>${donations.map(d => `
+                        <tr>
+                            <td><strong>${(d.type || 'N/A').toUpperCase()}</strong></td>
+                            <td style="color:#64748b;">${d.description || '-'}</td>
+                            <td>${d.user?.name || 'Unknown'}</td>
+                            <td><span class="status-badge status-${(d.status||'').toLowerCase()}">${d.status || 'N/A'}</span></td>
+                            <td style="color:#94a3b8;">${new Date(d.createdAt).toLocaleDateString()}</td>
+                        </tr>
+                    `).join('')}</tbody>
+                </table>`;
+        }
+
+        function renderRecentDonations(donations) {
+            if (!donations.length) {
+                document.getElementById("recentDonations").innerHTML = "<p class='empty-state'>No donations yet.</p>";
+                return;
+            }
+            document.getElementById("recentDonations").innerHTML = `
+                <table class="data-table">
+                    <thead><tr><th>Type</th><th>Description</th><th>Status</th><th>Date</th></tr></thead>
+                    <tbody>${donations.map(d => `
+                        <tr>
+                            <td><strong>${(d.type||'N/A').toUpperCase()}</strong></td>
+                            <td style="color:#64748b;">${d.description || '-'}</td>
+                            <td><span class="status-badge status-${(d.status||'').toLowerCase()}">${d.status||'N/A'}</span></td>
+                            <td style="color:#94a3b8;">${new Date(d.createdAt).toLocaleDateString()}</td>
+                        </tr>
+                    `).join('')}</tbody>
+                </table>`;
+        }
+
+        function filterDonations() {
+            const q = document.getElementById("donationSearch").value.toLowerCase();
+            renderDonations(allDonations.filter(d =>
+                d.type?.toLowerCase().includes(q) ||
+                d.status?.toLowerCase().includes(q) ||
+                d.description?.toLowerCase().includes(q)
+            ));
+        }
+
+        loadAll();
     </script>
 </body>
 </html>

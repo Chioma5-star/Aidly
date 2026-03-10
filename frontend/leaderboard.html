@@ -1,60 +1,207 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"><title>Leaderboard - Aidly</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaderboard - Aidly</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        .lb-nav {
+            background: rgba(255,255,255,0.9);
+            backdrop-filter: blur(10px);
+            padding: 16px 8%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e2e8f0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .lb-nav .logo { font-size: 24px; font-weight: 800; color: #166534; cursor: pointer; }
+        .lb-nav button {
+            background: #f1f5f9;
+            color: #1e293b;
+            border: 1px solid #e2e8f0;
+            padding: 10px 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            width: auto;
+        }
+        .lb-nav button:hover { background: #e2e8f0; }
+
+        .lb-wrapper {
+            max-width: 650px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .lb-hero {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        .lb-hero h2 {
+            font-size: 28px;
+            font-weight: 800;
+            color: #0f172a;
+            margin-bottom: 6px;
+        }
+        .lb-hero p {
+            color: #64748b;
+            font-size: 15px;
+        }
+
+        /* Top 3 podium */
+        .podium {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            gap: 12px;
+            margin-bottom: 32px;
+        }
+        .podium-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 20px 16px;
+            text-align: center;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+            flex: 1;
+            max-width: 180px;
+        }
+        .podium-card.first {
+            border: 2px solid #f59e0b;
+            background: linear-gradient(135deg, #fffbeb, #fef3c7);
+            transform: translateY(-12px);
+        }
+        .podium-card.second { background: linear-gradient(135deg, #f8fafc, #f1f5f9); }
+        .podium-card.third { background: linear-gradient(135deg, #fff7ed, #ffedd5); }
+
+        .podium-medal { font-size: 36px; margin-bottom: 8px; }
+        .podium-name { font-weight: 700; font-size: 15px; color: #0f172a; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .podium-pts { font-size: 13px; font-weight: 700; color: #059669; background: #ecfdf5; padding: 3px 10px; border-radius: 20px; display: inline-block; }
+
+        /* Rest of list */
+        .lb-list { background: white; border-radius: 16px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.04); }
+        .lb-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            border-bottom: 1px solid #f1f5f9;
+            transition: background 0.15s;
+        }
+        .lb-row:last-child { border-bottom: none; }
+        .lb-row:hover { background: #f8fafc; }
+
+        .lb-rank { font-size: 14px; font-weight: 700; color: #94a3b8; width: 32px; }
+        .lb-name { font-size: 15px; font-weight: 600; color: #1e293b; flex: 1; margin-left: 8px; }
+        .lb-pts { font-size: 13px; font-weight: 700; color: #059669; background: #ecfdf5; padding: 4px 12px; border-radius: 20px; }
+
+        .empty-state { text-align: center; padding: 50px 20px; color: #94a3b8; }
+
+        /* Highlight current user */
+        .lb-row.is-me { background: #f0fdf4; border-left: 3px solid #22c55e; }
+    </style>
 </head>
 <body>
-    <header class="header">
-        <div class="logo" onclick="window.location.href='dashboard.html'" style="cursor:pointer">💚 Aidly</div>
-        <button class="btn-logout" onclick="window.location.href='dashboard.html'">Back</button>
-    </header>
-    <main class="container">
-        <div class="donation-box">
-            <h2 style="text-align:center">🏆 Top Donors</h2>
-            <div id="leaderboardList">Loading...</div>
+
+    <nav class="lb-nav">
+        <div class="logo" onclick="window.location.href='dashboard.html'">💚 Aidly</div>
+        <button onclick="window.location.href='dashboard.html'">← Back to Dashboard</button>
+    </nav>
+
+    <div class="lb-wrapper">
+        <div class="lb-hero">
+            <h2>🏆 Top Donors</h2>
+            <p>Recognizing our most generous community members.</p>
         </div>
-    </main>
-    <script src="js/api.js"></script>
+
+        <!-- Podium for top 3 -->
+        <div class="podium" id="podium" style="display:none;"></div>
+
+        <!-- Rest of list (4th and below) -->
+        <div class="lb-list" id="leaderboardList">
+            <div class="empty-state">Loading leaderboard...</div>
+        </div>
+    </div>
+
     <script>
-    
+        const API_URL = "http://127.0.0.1:5000/api";
+
         async function load() {
+            const token = localStorage.getItem("aidlyToken");
+            const currentUser = JSON.parse(localStorage.getItem("aidlyUser") || "{}");
+
             try {
-                const donors = await AidlyAPI.get("/auth/leaderboard");
-                
-                // If no donors found, show a message
+                const res = await fetch(`${API_URL}/auth/leaderboard`, {
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+                const donors = await res.json();
+
                 if (!donors || donors.length === 0) {
-                    document.getElementById("leaderboardList").innerHTML = "<p style='text-align:center;'>No donors yet. Be the first!</p>";
+                    document.getElementById("leaderboardList").innerHTML = `
+                        <div class="empty-state">
+                            <div style="font-size:48px;">🏆</div>
+                            <p style="margin-top:10px;">No donors yet. Be the first!</p>
+                        </div>`;
                     return;
                 }
 
-                document.getElementById("leaderboardList").innerHTML = donors.map((d, i) => {
-                    let medal = "";
-                    if (i === 0) medal = "🥇";
-                    else if (i === 1) medal = "🥈";
-                    else if (i === 2) medal = "🥉";
-                    else medal = `#${i + 1}`;
+                const medals = ["🥇", "🥈", "🥉"];
+                const podiumClasses = ["first", "second", "third"];
+                // Reorder podium: 2nd, 1st, 3rd for visual effect
+                const podiumOrder = [1, 0, 2];
 
-                    return `
-                        <div style="display:flex; justify-content:space-between; align-items:center; padding:15px; border-bottom:1px solid #f1f5f9; background: ${i === 0 ? '#fffbeb' : 'white'};">
-                            <span style="font-size: 1.1rem;">
-                                <span style="margin-right: 10px; width: 30px; display: inline-block;">${medal}</span>
-                                <strong>${d.name}</strong>
-                            </span>
-                            <span style="color:#059669; font-weight:bold; background: #ecfdf5; padding: 4px 10px; border-radius: 12px;">
-                                ${d.points || 0} pts
-                            </span>
-                        </div>
-                    `;
-                }).join('');
+                // Render podium (top 3)
+                const top3 = donors.slice(0, 3);
+                if (top3.length > 0) {
+                    const podium = document.getElementById("podium");
+                    podium.style.display = "flex";
+                    podium.innerHTML = podiumOrder.map(i => {
+                        const d = top3[i];
+                        if (!d) return "";
+                        return `
+                            <div class="podium-card ${podiumClasses[i]}">
+                                <div class="podium-medal">${medals[i]}</div>
+                                <div class="podium-name">${d.name}</div>
+                                <div class="podium-pts">${d.points || 0} pts</div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+
+                // Render rest of list (4th and below)
+                const rest = donors.slice(3);
+                if (rest.length === 0) {
+                    document.getElementById("leaderboardList").innerHTML = `
+                        <div class="empty-state" style="padding: 20px;">
+                            <p style="color: #94a3b8; font-size:14px;">Only top 2 donors so far!</p>
+                        </div>`;
+                } else {
+                    document.getElementById("leaderboardList").innerHTML = rest.map((d, i) => {
+                        const isMe = currentUser.id === d._id;
+                        return `
+                            <div class="lb-row ${isMe ? 'is-me' : ''}">
+                                <span class="lb-rank">#${i + 4}</span>
+                                <span class="lb-name">${d.name} ${isMe ? '<span style="font-size:11px; color:#22c55e;">(You)</span>' : ''}</span>
+                                <span class="lb-pts">${d.points || 0} pts</span>
+                            </div>
+                        `;
+                    }).join('');
+                }
+
             } catch (err) {
                 console.error(err);
-                document.getElementById("leaderboardList").innerHTML = "<p style='color:red; text-align:center;'>Failed to load leaderboard.</p>";
+                document.getElementById("leaderboardList").innerHTML = `
+                    <div class="empty-state" style="color:red;">Failed to load leaderboard. Is the backend running?</div>`;
             }
-        } // Closed the function here!
+        }
 
-        load(); // Call the function
-
+        load();
     </script>
 </body>
 </html>

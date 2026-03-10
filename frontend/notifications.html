@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifications - Aidly</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .notif-nav {
+            background: rgba(255,255,255,0.9);
+            backdrop-filter: blur(10px);
+            padding: 16px 8%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e2e8f0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .notif-nav h2 {
+            font-size: 24px;
+            font-weight: 800;
+            color: #166534;
+        }
+
+        .notif-nav button {
+            background: #f1f5f9;
+            color: #1e293b;
+            border: 1px solid #e2e8f0;
+            padding: 10px 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            width: auto;
+        }
+
+        .notif-nav button:hover { background: #e2e8f0; }
+
+        .notif-wrapper {
+            max-width: 700px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .notif-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .notif-header h3 {
+            font-size: 20px;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .mark-read-btn {
+            background: #f1f5f9 !important;
+            color: #475569 !important;
+            border: 1px solid #e2e8f0 !important;
+            padding: 8px 16px !important;
+            border-radius: 10px !important;
+            font-size: 13px !important;
+            font-weight: 600 !important;
+            cursor: pointer !important;
+            width: auto !important;
+        }
+
+        .notif-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 18px 20px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            transition: 0.2s;
+        }
+
+        .notif-card.unread {
+            border-left: 4px solid #22c55e;
+            background: #f0fdf4;
+        }
+
+        .notif-icon {
+            font-size: 24px;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .notif-content {
+            flex: 1;
+        }
+
+        .notif-message {
+            font-size: 15px;
+            color: #1e293b;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .notif-time {
+            font-size: 12px;
+            color: #94a3b8;
+        }
+
+        .notif-type-badge {
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 20px;
+            background: #dcfce7;
+            color: #166534;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .empty-notif {
+            text-align: center;
+            padding: 60px 20px;
+            color: #94a3b8;
+        }
+
+        .empty-notif p { font-size: 16px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+    <nav class="notif-nav">
+        <h2>💚 Aidly</h2>
+        <button onclick="window.location.href='dashboard.html'">← Back to Dashboard</button>
+    </nav>
+
+    <div class="notif-wrapper">
+        <div class="notif-header">
+            <h3>🔔 Notifications</h3>
+            <button class="mark-read-btn" onclick="markAllRead()">Mark all as read</button>
+        </div>
+        <div id="notifList">
+            <p style="color: #94a3b8; text-align: center;">Loading notifications...</p>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "http://127.0.0.1:5000/api";
+
+        function timeAgo(dateStr) {
+            const diff = Math.floor((Date.now() - new Date(dateStr)) / 1000);
+            if (diff < 60) return "Just now";
+            if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+            if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+            return `${Math.floor(diff / 86400)}d ago`;
+        }
+
+        function getIcon(type) {
+            const icons = {
+                "Item Requested": "📦",
+                "Item Approved": "✅",
+                "Item Delivered": "🎉",
+                "ID Verified": "🪪"
+            };
+            return icons[type] || "🔔";
+        }
+
+        async function loadNotifications() {
+            const token = localStorage.getItem("aidlyToken");
+            const list = document.getElementById("notifList");
+
+            try {
+                const res = await fetch(`${API_URL}/notifications`, {
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+                const notifications = await res.json();
+
+                if (!Array.isArray(notifications) || notifications.length === 0) {
+                    list.innerHTML = `
+                        <div class="empty-notif">
+                            <div style="font-size: 48px;">🔔</div>
+                            <p>No notifications yet.</p>
+                            <p style="font-size: 13px; margin-top: 5px;">You'll be notified about donation updates here.</p>
+                        </div>`;
+                    return;
+                }
+
+                list.innerHTML = notifications.map(n => `
+                    <div class="notif-card ${n.isRead ? '' : 'unread'}">
+                        <div class="notif-icon">${getIcon(n.type)}</div>
+                        <div class="notif-content">
+                            <p class="notif-message">${n.message}</p>
+                            <p class="notif-time">${timeAgo(n.createdAt)}</p>
+                        </div>
+                        <span class="notif-type-badge">${n.type}</span>
+                    </div>
+                `).join('');
+            } catch (err) {
+                list.innerHTML = "<p style='color:red; text-align:center;'>Error loading notifications.</p>";
+            }
+        }
+
+        async function markAllRead() {
+            const token = localStorage.getItem("aidlyToken");
+            try {
+                await fetch(`${API_URL}/notifications/mark-read`, {
+                    method: "PUT",
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+                loadNotifications();
+            } catch (err) {
+                alert("Failed to mark notifications as read.");
+            }
+        }
+
+        loadNotifications();
+    </script>
+</body>
+</html>

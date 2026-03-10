@@ -3,61 +3,256 @@
 <head>
     <meta charset="UTF-8">
     <title>Manage My Donations - Aidly</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* NAV */
+        .donor-nav {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 16px 8%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e2e8f0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .donor-nav h2 {
+            font-size: 24px;
+            font-weight: 800;
+            color: #166534;
+        }
+
+        .donor-nav button {
+            background: #f1f5f9;
+            color: #1e293b;
+            border: 1px solid #e2e8f0;
+            padding: 10px 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: 0.2s;
+            width: auto;
+        }
+
+        .donor-nav button:hover {
+            background: #e2e8f0;
+        }
+
+        /* SECTION HEADERS */
+        .section-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 6px;
+        }
+
+        .section-subtitle {
+            color: #64748b;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        /* REQUEST CARDS */
+        .request-card-pending {
+            border: 1px solid #fbbf24;
+            background: #fffbeb;
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+        }
+
+        .request-card-approved {
+            border: 1px solid #86efac;
+            background: #f0fdf4;
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+        }
+
+        .card-type {
+            font-size: 16px;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 6px;
+        }
+
+        .card-desc {
+            font-size: 14px;
+            color: #64748b;
+            margin-bottom: 6px;
+        }
+
+        .card-recipient {
+            font-size: 14px;
+            color: #334155;
+            margin-bottom: 12px;
+        }
+
+        .btn-approve {
+            background: #22c55e !important;
+            color: white !important;
+            border: none !important;
+            padding: 12px 20px !important;
+            border-radius: 10px !important;
+            cursor: pointer !important;
+            font-weight: 700 !important;
+            font-size: 14px !important;
+            width: 100% !important;
+            transition: 0.2s !important;
+        }
+
+        .btn-approve:hover {
+            filter: brightness(1.1);
+            transform: translateY(-1px);
+        }
+
+        .status-badge {
+            display: inline-block;
+            background: #dcfce7;
+            color: #166534;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .divider {
+            border: 0;
+            border-top: 1px solid #e2e8f0;
+            margin: 30px 0;
+        }
+
+        .empty-state {
+            color: #94a3b8;
+            font-size: 14px;
+            padding: 20px;
+            text-align: center;
+            background: white;
+            border-radius: 12px;
+            border: 1px dashed #e2e8f0;
+        }
+    </style>
 </head>
-<body onload="loadRequests()">
-    <nav>
-        <h2>Aidly Donor Panel</h2>
-        <button onclick="window.location.href='dashboard.html'">Back to Dashboard</button>
+<body>
+
+    <!-- HEADER -->
+    <nav class="donor-nav">
+        <h2>💚 Aidly Donor Panel</h2>
+        <button onclick="window.location.href='dashboard.html'">← Back to Dashboard</button>
     </nav>
 
-    <div class="container">
-        <h3>Incoming Requests</h3>
-        <div id="requestList" class="donor-grid">
-            <p>Checking for requests...</p>
+    <div class="container" style="flex-direction: column; max-width: 700px; margin: 0 auto;">
+
+        <!-- PENDING REQUESTS -->
+        <div class="donation-box" style="max-width: 100%;">
+            <p class="section-title">⏳ Pending Requests</p>
+            <p class="section-subtitle">Items that recipients have requested and are waiting for your approval.</p>
+            <div id="pendingList">
+                <p class="empty-state">Loading...</p>
+            </div>
         </div>
+
+        <!-- APPROVED REQUESTS -->
+        <div class="donation-box" style="max-width: 100%;">
+            <p class="section-title"> Approved Donations</p>
+            <p class="section-subtitle">Items you have already approved and are being delivered.</p>
+            <div id="approvedList">
+                <p class="empty-state">Loading...</p>
+            </div>
+        </div>
+
     </div>
 
-    <script src="js/api.js"></script>
     <script>
-        /* Inside donor_manage.html */
-async function loadRequests() {
-    const list = document.getElementById("requestList");
-    try {
-        const requests = await AidlyAPI.get("/donations/donor-requests");
-        
-        if (requests.length === 0) {
-            list.innerHTML = "<p>No pending requests for your items yet.</p>";
-            return;
-        }
+        const API_URL = "http://127.0.0.1:5000/api";
 
-        // THIS IS WHERE YOU PUT THE MAPPING CODE:
-        list.innerHTML = requests.map(r => `
-            <div class="request-card">
-                <h4>📦 ${r.type.toUpperCase()}</h4>
-                <p><strong>Description:</strong> ${r.description}</p>
-                <hr>
-                <p><strong>Requested by:</strong> ${r.recipient ? r.recipient.name : 'Unknown'}</p>
-                <p><strong>Email:</strong> ${r.recipient ? r.recipient.email : 'N/A'}</p>
-                <button onclick="approve('${r._id}')" class="btn-approve">Approve Request</button>
-            </div>
-        `).join('');
+        async function loadRequests() {
+            const token = localStorage.getItem("aidlyToken");
+            const pendingList = document.getElementById("pendingList");
+            const approvedList = document.getElementById("approvedList");
 
-    } catch (err) {
-        console.error(err);
-        list.innerHTML = "<p>Error loading requests. Please try logging in again.</p>";
-    }
-}
-        async function approve(id) {
-            if(!confirm("Ready to donate this item to this recipient?")) return;
             try {
-                await AidlyAPI.put(`/donations/approve/${id}`, {});
-                alert("Donation Approved! Thank you for your kindness.");
-                loadRequests(); // Refresh the list
+                const res = await fetch(`${API_URL}/donations/donor-requests`, {
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+
+                if (!res.ok) {
+                    pendingList.innerHTML = "<p class='empty-state' style='color:red;'>Error loading. Are you logged in as a donor?</p>";
+                    approvedList.innerHTML = "";
+                    return;
+                }
+
+                const requests = await res.json();
+
+                if (!Array.isArray(requests) || requests.length === 0) {
+                    pendingList.innerHTML = "<p class='empty-state'>No pending requests yet.</p>";
+                    approvedList.innerHTML = "<p class='empty-state'>No approved donations yet.</p>";
+                    return;
+                }
+
+                const pending = requests.filter(r => r.status === "Requested");
+                const approved = requests.filter(r => r.status === "Approved");
+
+                // Render pending
+                pendingList.innerHTML = pending.length ? pending.map(r => `
+                    <div class="request-card-pending">
+                        <p class="card-type">📦 ${(r.type || 'ITEM').toUpperCase()}</p>
+                        <p class="card-desc">${r.description || 'No description provided'}</p>
+                        <p class="card-recipient"><strong>Requested by:</strong> ${r.recipientId?.name || 'Unknown'} &nbsp;·&nbsp; ${r.recipientId?.email || ''}</p>
+                        <button class="btn-approve" onclick="approve('${r._id}')"> Approve This Request</button>
+                    </div>
+                `).join('') : "<p class='empty-state'>No pending requests right now.</p>";
+
+                // Render approved
+                approvedList.innerHTML = approved.length ? approved.map(r => `
+                    <div class="request-card-approved">
+                        <p class="card-type">📦 ${(r.type || 'ITEM').toUpperCase()}</p>
+                        <p class="card-desc">${r.description || 'No description provided'}</p>
+                        <p class="card-recipient"><strong>Recipient:</strong> ${r.recipientId?.name || 'Unknown'} &nbsp;·&nbsp; ${r.recipientId?.email || ''}</p>
+                        <span class="status-badge">${r.status}</span>
+                    </div>
+                `).join('') : "<p class='empty-state'>No approved donations yet.</p>";
+
             } catch (err) {
-                alert("Failed to approve. Try again.");
+                console.error("Load Error:", err);
+                pendingList.innerHTML = "<p class='empty-state' style='color:red;'>Connection error. Is your backend running?</p>";
             }
         }
+
+        async function approve(id) {
+            if (!confirm("Approve this donation request?")) return;
+            const token = localStorage.getItem("aidlyToken");
+
+            try {
+                const res = await fetch(`${API_URL}/donations/approve/${id}`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    }
+                });
+
+                if (res.ok) {
+                    alert(" Approved! The recipient will be notified.");
+                    loadRequests();
+                } else {
+                    const data = await res.json();
+                    alert(data.message || "Failed to approve.");
+                }
+            } catch (err) {
+                alert("Connection error. Is your backend running?");
+            }
+        }
+
+        // Load on page open
+        loadRequests();
     </script>
 </body>
 </html>

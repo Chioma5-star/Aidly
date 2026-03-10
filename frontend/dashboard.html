@@ -6,6 +6,49 @@
   <title>Dashboard - Aidly</title>
   <script src="https://js.paystack.co/v1/inline.js"></script>
   <link rel="stylesheet" href="css/style.css">
+  <style>
+    .verify-form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .verify-form-grid .full-width { grid-column: 1 / -1; }
+    .verify-label {
+      font-weight: 600; font-size: 14px;
+      display: block; margin-bottom: 6px; color: #1e293b;
+    }
+    .verify-input, .verify-select, .verify-textarea {
+      width: 100%; padding: 11px 14px; border-radius: 10px;
+      border: 1px solid #e2e8f0; font-size: 14px;
+      font-family: inherit; box-sizing: border-box;
+      background: #f8fafc;
+    }
+    .verify-textarea { resize: vertical; min-height: 90px; }
+    .verify-input:focus, .verify-select:focus, .verify-textarea:focus {
+      outline: none; border-color: #22c55e; background: white;
+    }
+    .file-upload-box {
+      border: 2px dashed #e2e8f0; border-radius: 12px;
+      padding: 20px; text-align: center; cursor: pointer;
+      background: #f8fafc; transition: 0.2s;
+    }
+    .file-upload-box:hover { border-color: #22c55e; background: #f0fdf4; }
+    .file-upload-box .upload-icon { font-size: 28px; margin-bottom: 8px; }
+    .file-upload-box p { font-size: 13px; color: #64748b; margin: 0; }
+    .file-upload-box .file-name {
+      font-size: 13px; color: #22c55e; font-weight: 600;
+      margin-top: 6px;
+    }
+    .section-divider {
+      border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;
+    }
+    .step-label {
+      font-size: 13px; font-weight: 700; color: #64748b;
+      text-transform: uppercase; letter-spacing: 0.5px;
+      margin-bottom: 14px;
+    }
+  </style>
 </head>
 <body>
 
@@ -15,58 +58,114 @@
         <div id="pointsBadge" style="display:none; background: #fef3c7; color: #92400e; padding: 4px 12px; border-radius: 20px; font-weight: 700; border: 1px solid #f59e0b; margin-right: 15px;">
             ⭐ <span id="userPoints">0</span> pts
         </div>
-
-        <span id="userRoleBadge" style="padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; margin-right: 15px; display: none;">
-            ROLE
-        </span>
-        
+        <span id="userRoleBadge" style="padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; margin-right: 15px; display: none;">ROLE</span>
         <span id="welcomeText" style="font-weight: 600; margin-right: 15px;">Welcome, Guest</span>
-        
+
+        <a href="notifications.html" id="notifBell" title="Notifications"
+           style="position: relative; margin-right: 15px; text-decoration: none; font-size: 22px; line-height: 1;">
+            🔔
+            <span id="notifBadge" style="display:none; position: absolute; top: -6px; right: -6px; background: #ef4444; color: white; font-size: 10px; font-weight: 800; padding: 2px 5px; border-radius: 20px; min-width: 16px; text-align: center; line-height: 1.4;">0</span>
+        </a>
+
         <button class="btn-logout" onclick="logout()">Logout</button>
     </div>
-</header>
+  </header>
 
   <main class="container">
-    
-    <!-- ADMIN PANEL -->
-    <div id="adminPanel" class="donation-box" style="display:none; border: 2px solid #2563eb;">
-      <h2>🔐 Admin Verification Panel</h2>
-      <div id="pendingList" style="margin-top: 20px;">
-        <p>Loading pending verifications...</p>
-      </div>
-    </div>
 
     <!-- RECIPIENT: VERIFY ACCOUNT -->
-    <div id="verificationSection" class="donation-box" style="display:none; border: 2px solid #fbbf24;">
-      <h2>Verify Your Account</h2>
-      <p>Upload Ghana Card to request aid.</p>
-      <input type="file" id="idCardInput" accept="image/*" onchange="storeFile(this)">
-      <button onclick="uploadID()" id="uploadBtn">Upload ID Card</button>
-      <p id="uploadStatus" style="margin-top:10px; font-weight:bold;"></p>
+    <div id="verificationSection" class="donation-box" style="display:none; border: 2px solid #fbbf24; max-width: 680px;">
+      <h2>🪪 Verify Your Account</h2>
+      <p style="color:#64748b; margin-bottom:24px;">Complete all sections below to submit your verification request. Admin will review and approve your account.</p>
+
+      <!-- STEP 1: ID Documents -->
+      <p class="step-label">Step 1 — Identity Documents</p>
+      <div class="verify-form-grid">
+        <div>
+          <label class="verify-label">Ghana Card / National ID *</label>
+          <div class="file-upload-box" onclick="document.getElementById('idCardInput').click()">
+            <div class="upload-icon">🪪</div>
+            <p>Click to upload Ghana Card</p>
+            <p class="file-name" id="idCardName">No file chosen</p>
+          </div>
+          <input type="file" id="idCardInput" accept="image/*" style="display:none;">
+        </div>
+        <div>
+          <label class="verify-label">Proof of Need Document *</label>
+          <div class="file-upload-box" onclick="document.getElementById('proofInput').click()">
+            <div class="upload-icon">📄</div>
+            <p>Utility bill, medical report, or community letter</p>
+            <p class="file-name" id="proofName">No file chosen</p>
+          </div>
+          <input type="file" id="proofInput" accept="image/*,.pdf" style="display:none;">
+        </div>
+      </div>
+
+      <hr class="section-divider">
+
+      <!-- STEP 2: Needs Assessment -->
+      <p class="step-label">Step 2 — Needs Assessment</p>
+      <div class="verify-form-grid">
+        <div>
+          <label class="verify-label">Number of Dependents *</label>
+          <input type="number" id="dependents" min="0" max="20" placeholder="e.g. 3" class="verify-input">
+        </div>
+        <div>
+          <label class="verify-label">Primary Need *</label>
+          <select id="specificNeed" class="verify-select">
+            <option value="">Select your main need</option>
+            <option value="Food">🍚 Food</option>
+            <option value="Clothing">👕 Clothing</option>
+            <option value="Financial">💰 Financial Support</option>
+            <option value="Medical">🏥 Medical</option>
+            <option value="Other">📦 Other</option>
+          </select>
+        </div>
+        <div>
+          <label class="verify-label">Monthly Income Range *</label>
+          <select id="incomeRange" class="verify-select">
+            <option value="">Select income range</option>
+            <option value="No income">No income</option>
+            <option value="Below ₵500">Below ₵500</option>
+            <option value="₵500-₵1000">₵500 - ₵1000</option>
+            <option value="Above ₵1000">Above ₵1000</option>
+          </select>
+        </div>
+        <div>
+          <label class="verify-label">&nbsp;</label>
+          <!-- spacer -->
+        </div>
+        <div class="full-width">
+          <label class="verify-label">Briefly describe your situation *</label>
+          <textarea id="situation" class="verify-textarea" placeholder="e.g. I am a single mother of 3 with no stable income. I lost my job in January and need help with food and clothing for my children..."></textarea>
+        </div>
+      </div>
+
+      <button onclick="uploadID()" id="uploadBtn" style="width:100%; background:#22c55e; color:white; border:none; padding:14px; border-radius:12px; font-weight:700; font-size:15px; cursor:pointer; margin-top:8px;">
+        Submit Verification Request →
+      </button>
+      <p id="uploadStatus" style="margin-top:10px; font-weight:600; text-align:center;"></p>
     </div>
 
-    <!-- RECIPIENT: BROWSE AID -->
+    <!-- RECIPIENT DASHBOARD -->
     <div id="recipientDashboard" class="donation-box" style="display:none; max-width: 800px;">
-    <section style="margin-bottom: 40px;">
+      <section style="margin-bottom: 40px;">
         <h2>📋 My Requests</h2>
         <p style="margin-bottom: 15px; color: #64748b;">Track the status of items you have requested.</p>
-        <div id="myRequestsList" class="donor-grid">
-            <p>Loading your requests...</p>
-        </div>
-    </section>
+        <div id="myRequestsList"><p>Loading your requests...</p></div>
+      </section>
 
-    <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 30px 0;">
+      <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 30px 0;">
 
-    <section>
+      <section>
         <h2>🎁 Browse Aid</h2>
         <p style="margin-bottom: 15px;">Items available from our donors.</p>
         <button onclick="loadAvailableAid()" style="background: #3b82f6; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold;">
-            Refresh Available Items
+          Browse Available Items
         </button>
-        <div id="availableItemsList" style="margin-top: 15px; min-height: 100px;">
-            </div>
-    </section>
-</div>
+        <div id="availableItemsList" style="margin-top: 15px; min-height: 100px;"></div>
+      </section>
+    </div>
 
     <!-- DONOR: MAKE A DONATION -->
     <div id="donorSection" class="donation-box" style="display:none;">
@@ -81,9 +180,12 @@
         <div id="amountField" style="display:none;"><input type="number" id="donationAmount" placeholder="Amount (₵)"></div>
         <div id="descriptionField" style="display:none;"><textarea id="donationDescription" placeholder="Details..."></textarea></div>
         <button type="submit">Submit Donation</button>
-        <button onclick="window.location.href='leaderboard.html'" style="margin-top: 15px; background: #059669; color: white; width: 100%;">
-    🏆 View Top Donors Leaderboard
-</button>
+        <button type="button" class="btn-manage" onclick="window.location.href='donor_manage.html'">
+          📥 Manage Incoming Requests
+        </button>
+        <button type="button" class="btn-leaderboard" onclick="window.location.href='leaderboard.html'">
+          🏆 View Top Donors Leaderboard
+        </button>
       </form>
     </div>
 
@@ -97,7 +199,28 @@
 
   </main>
 
-  <script src="js/api.js"></script>
   <script src="js/script.js"></script>
+  <script>
+    async function loadNotifCount() {
+        const token = localStorage.getItem("aidlyToken");
+        if (!token) return;
+        try {
+            const res = await fetch("http://127.0.0.1:5000/api/notifications/unread-count", {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            const data = await res.json();
+            const badge = document.getElementById("notifBadge");
+            if (data.count > 0) {
+                badge.textContent = data.count;
+                badge.style.display = "inline-block";
+            } else {
+                badge.style.display = "none";
+            }
+        } catch (err) {
+            console.log("Could not load notification count");
+        }
+    }
+    loadNotifCount();
+  </script>
 </body>
 </html>

@@ -7,6 +7,7 @@ import { fileURLToPath } from "url";
 import connectDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import donationRoutes from "./routes/donationRoutes.js";
+import notificationRoutes from "./routes/notificationRoutes.js";
 
 dotenv.config();
 connectDB();
@@ -38,6 +39,7 @@ app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/donations", donationRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 app.get("/", (req, res) => res.send("Aidly API Running..."));
 

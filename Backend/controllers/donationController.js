@@ -1,10 +1,17 @@
 import Donation from "../models/Donation.js";
-import ActivityLog from "../models/ActivityLog.js";
-import User from "../models/User.js"; // Needed to update points
-import axios from "axios";
+import User from "../models/User.js";
+import Notification from "../models/Notification.js";
 
+// Helper: Create a notification
+async function createNotification(userId, message, type) {
+    try {
+        await Notification.create({ user: userId, message, type });
+    } catch (err) {
+        console.error("Notification Error:", err);
+    }
+}
 
-// Inside controllers/donationController.js -> createDonation
+// 1. Create Donation
 export const createDonation = async (req, res) => {
     try {
         const { type, amount, description, transactionReference } = req.body;
@@ -14,130 +21,260 @@ export const createDonation = async (req, res) => {
             amount,
             description,
             transactionReference,
-            status: type === 'money' ? 'Completed' : 'Pending'
+            status: type === 'money' ? 'Completed' : 'available'
         });
 
         await donation.save();
 
-        // AWARD 10 POINTS FOR MONEY IMMEDIATELY
         if (type === 'money') {
-            const User = await import("../models/User.js").then(m => m.default);
             await User.findByIdAndUpdate(req.user._id, { $inc: { points: 10 } });
         }
 
         res.status(201).json(donation);
     } catch (error) {
+        console.error("Create Donation Error:", error);
         res.status(500).json({ message: "Error creating donation" });
     }
 };
 
+// 2. Donor: Get own donation history
 export const getMyDonations = async (req, res) => {
-  try {
-    const donations = await Donation.find({ user: req.user.id }).sort({ createdAt: -1 });
-    res.json(donations);
-  } catch (error) {
-    res.status(500).json({ message: "Failed to fetch donation history." });
-  }
-};
-// NEW: Get all donations for the Recipient Feed
-export const getAllDonations = async (req, res) => {
-  try {
-    // We import your Donation model (assuming it's imported at the top of your file)
-    // This finds all items, sorting the newest ones to the top
-    const donations = await Donation.find().sort({ createdAt: -1 });
-    
-    res.status(200).json(donations);
-  } catch (error) {
-    console.error("Error fetching all donations:", error);
-    res.status(500).json({ message: "Failed to load donations." });
-  }
-};
-export const requestItem = async (req, res) => {
     try {
-        const { itemId } = req.body;
-        const donation = await Donation.findById(itemId);
-        
-        // Use a case-insensitive check or ensure your DB uses "available"
-        if (!donation || donation.status.toLowerCase() !== 'available') {
-            return res.status(400).json({ message: "Item no longer available" });
-        }
-
-        donation.status = 'pending'; // This must match an option in your Schema enum
-        donation.recipient = req.user.id; // Use .id to match your createDonation style
-        await donation.save();
-
-        if (ActivityLog) {
-            await ActivityLog.recordAction(req.user.id, "REQUEST_ITEM", `Requested: ${donation.type}`);
-        }
-
-        res.json({ message: "Request sent successfully! Wait for donor approval." });
+        const donations = await Donation.find({ user: req.user._id }).sort({ createdAt: -1 });
+        res.json(donations);
     } catch (error) {
-        console.error("Request Error:", error); // This will now show the REAL error in your terminal
-        res.status(500).json({ message: "Server error during request" });
+        res.status(500).json({ message: "Failed to fetch donation history." });
     }
 };
+
+// 3. Browse all available physical donations
+export const getAllDonations = async (req, res) => {
+    try {
+        const donations = await Donation.find({ 
+            type: { $ne: 'money' },
+            status: 'available'
+        }).sort({ createdAt: -1 });
+        res.status(200).json(donations);
+    } catch (error) {
+        res.status(500).json({ message: "Failed to load donations." });
+    }
+};
+
+// 4. Recipient: Request an item — notifies donor
+export const requestItem = async (req, res) => {
+    try {
+        const donation = await Donation.findById(req.params.id);
+        if (!donation) return res.status(404).json({ message: "Item not found" });
+
+        const currentStatus = (donation.status || "").toLowerCase().trim();
+        if (currentStatus !== "available") {
+            return res.status(400).json({ message: `Item is already ${donation.status}.` });
+        }
+
+        donation.recipientId = req.user._id;
+        donation.status = "Requested";
+        await donation.save();
+
+        // Notify the donor that someone requested their item
+        await createNotification(
+            donation.user,
+            `📦 Someone has requested your ${donation.type} donation: "${donation.description || donation.type}".`,
+            "Item Requested"
+        );
+
+        res.status(200).json({ message: "Item requested successfully!", donation });
+    } catch (error) {
+        console.error("Request Item Error:", error);
+        res.status(500).json({ message: "Server error: " + error.message });
+    }
+};
+
+// 5. Donor: See incoming requests
 export const getDonorRequests = async (req, res) => {
     try {
-        // Find donations created by this donor that have a recipient (status: pending)
-        const myDonations = await Donation.find({ 
-            user: req.user.id, 
-            status: "pending" 
-        }).populate("recipient", "name email"); // This lets you see the recipient's details
-
-        res.json(myDonations);
+        const requests = await Donation.find({ 
+            user: req.user._id, 
+            status: { $in: ["Requested", "Approved"] }
+        }).populate("recipientId", "name email");
+        
+        res.json(requests);
     } catch (error) {
         res.status(500).json({ message: "Error fetching requests" });
     }
 };
 
+// 6. Donor: Approve a request — notifies recipient
 export const approveRequest = async (req, res) => {
     try {
-        const { donationId } = req.params;
-        const donation = await Donation.findById(donationId);
-
+        const donation = await Donation.findById(req.params.id);
         if (!donation) return res.status(404).json({ message: "Donation not found" });
 
-        donation.status = "Approved"; 
-        await donation.save();
-
-        // Optional: Send a notification or log activity for the donor
-        if (ActivityLog) {
-            await ActivityLog.recordAction(req.user.id, "APPROVE_REQUEST", `Approved item for ${donation.recipient}`);
+        if (donation.status !== "Requested") {
+            return res.status(400).json({ message: "Can only approve items with Requested status" });
         }
 
-        res.json({ message: "Request approved! The recipient has been notified." });
+        donation.status = "Approved";
+        await donation.save();
+
+        // Notify the recipient that their request was approved
+        if (donation.recipientId) {
+            await createNotification(
+                donation.recipientId,
+                `✅ Your request for "${donation.description || donation.type}" has been approved! The donor will be in touch soon.`,
+                "Item Approved"
+            );
+        }
+
+        res.json({ message: "Request approved!", donation });
     } catch (error) {
-        res.status(500).json({ message: "Failed to approve request" });
+        res.status(500).json({ message: "Failed to approve" });
     }
 };
+
+// 7. Recipient: See their own requests
 export const getMyRequests = async (req, res) => {
     try {
-        // Find donations where the RECIPIENT is the current user
-        const requests = await Donation.find({ recipient: req.user._id })
-            .populate("user", "name email") // This lets the recipient see the DONOR'S contact info
+        const requests = await Donation.find({ recipientId: req.user._id })
+            .populate("user", "name email")
             .sort({ updatedAt: -1 });
-            
+
         res.json(requests);
     } catch (error) {
         res.status(500).json({ message: "Error fetching your requests" });
     }
 };
+
+// 8. Recipient: Confirm receipt — notifies donor
 export const markAsReceived = async (req, res) => {
     try {
-        const { donationId } = req.params;
-        const donation = await Donation.findById(donationId);
-
+        const donation = await Donation.findById(req.params.id);
         if (!donation) return res.status(404).json({ message: "Donation not found" });
+
+        if (donation.status !== "Approved") {
+            return res.status(400).json({ message: "Item must be Approved before marking as received" });
+        }
+
+        if (donation.recipientId.toString() !== req.user._id.toString()) {
+            return res.status(403).json({ message: "Not authorized" });
+        }
 
         donation.status = "Delivered";
         await donation.save();
 
-        // AWARD POINTS TO THE DONOR
-        const User = await import("../models/User.js").then(m => m.default);
+        // Award 50 points to the donor
         await User.findByIdAndUpdate(donation.user, { $inc: { points: 50 } });
 
-        res.json({ message: "Item received! Donor awarded 50 points." });
+        // Notify the donor that their item was delivered
+        await createNotification(
+            donation.user,
+            `🎉 Your ${donation.type} donation has been received and delivered! You've earned 50 points.`,
+            "Item Delivered"
+        );
+
+        res.json({ message: "Item marked as received! Donor awarded 50 points." });
     } catch (error) {
         res.status(500).json({ message: "Failed to update status" });
     }
 };
+
+export const getAllDonationsAdmin = async (req, res) => {
+    try {
+        const donations = await Donation.find()
+            .populate("user", "name email")
+            .sort({ createdAt: -1 });
+        res.json(donations);
+    } catch (error) {
+        res.status(500).json({ message: "Failed to fetch all donations" });
+    }
+};
+
+// Volunteer: Get available tasks (Approved donations with no volunteer)
+export const getAvailableTasks = async (req, res) => {
+    try {
+        const tasks = await Donation.find({
+            status: "Approved",
+            volunteerId: null,
+            type: { $ne: 'money' }
+        })
+        .populate("user", "name email")
+        .populate("recipientId", "name email")
+        .sort({ updatedAt: -1 });
+
+        res.json(tasks);
+    } catch (error) {
+        res.status(500).json({ message: "Failed to fetch tasks" });
+    }
+};
+
+// Volunteer: Accept a task
+export const acceptTask = async (req, res) => {
+    try {
+        console.log("=== ACCEPT TASK ===");
+        console.log("Task ID:", req.params.id);
+        console.log("Volunteer ID:", req.user._id);
+        
+        const donation = await Donation.findById(req.params.id);
+        console.log("Donation found:", donation);
+
+        donation.volunteerId = req.user._id;
+        donation.status = "Delivering";
+        await donation.save();
+
+        res.json({ message: "Task accepted!", donation });
+    } catch (error) {
+        res.status(500).json({ message: "Failed to accept task" });
+    }
+};
+
+// Volunteer: Get their own accepted tasks
+export const getMyTasks = async (req, res) => {
+    try {
+        const tasks = await Donation.find({ volunteerId: req.user._id })
+            .populate("user", "name email")
+            .populate("recipientId", "name email")
+            .sort({ updatedAt: -1 });
+
+        res.json(tasks);
+    } catch (error) {
+        res.status(500).json({ message: "Failed to fetch your tasks" });
+    }
+};
+
+// Volunteer: Mark as delivered
+export const volunteerMarkDelivered = async (req, res) => {
+    try {
+        const donation = await Donation.findById(req.params.id);
+        if (!donation) return res.status(404).json({ message: "Donation not found" });
+
+        if (donation.volunteerId.toString() !== req.user._id.toString()) {
+            return res.status(403).json({ message: "Not authorized" });
+        }
+
+        donation.status = "Delivered";
+        await donation.save();
+
+        // Award points to donor
+        await User.findByIdAndUpdate(donation.user, { $inc: { points: 50 } });
+
+        // Notify donor
+        await Notification.create({
+            user: donation.user,
+            message: `🎉 Your ${donation.type} donation has been delivered by a volunteer!`,
+            type: "Item Delivered"
+        });
+
+        // Notify recipient
+        if (donation.recipientId) {
+            await Notification.create({
+                user: donation.recipientId,
+                message: `📦 Your requested ${donation.type} has been delivered! Please confirm receipt.`,
+                type: "Item Delivered"
+            });
+        }
+
+        res.json({ message: "Marked as delivered!" });
+    } catch (error) {
+        res.status(500).json({ message: "Failed to mark as delivered" });
+    }
+};
+

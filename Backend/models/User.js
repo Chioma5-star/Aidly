@@ -5,7 +5,7 @@ const userSchema = new mongoose.Schema({
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    role: { type: String, enum: ["Admin", "Donor", "Recipient"], default: "Donor" },
+    role: { type: String, enum: ["Admin", "Donor","Volunteer", "Recipient"], default: "Donor" },
     isVerified: { type: Boolean, default: false },
     idCardPath: { type: String },
     points: { type: Number, default: 0 }

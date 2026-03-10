@@ -6,6 +6,7 @@ const API_URL = "http://127.0.0.1:5000/api";
 window.goToRegister = () => { window.location.href = "register.html"; };
 window.goToLogin = () => { window.location.href = "login.html"; };
 window.logout = () => { localStorage.clear(); window.location.href = "login.html"; };
+window.volunteer = () => { window.location.href = "register.html"; };
 
 window.toggleFields = function() {
     const type = document.getElementById("donationType").value;
@@ -42,7 +43,10 @@ if (loginForm) {
             if (res.ok) {
                 localStorage.setItem("aidlyToken", data.token);
                 localStorage.setItem("aidlyUser", JSON.stringify(data.user));
-                window.location.href = "dashboard.html";
+                const role = (data.user.role || "").toLowerCase();
+                if (role === "admin") window.location.href = "admin.html";
+                else if (role === "volunteer") window.location.href = "volunteer_dashboard.html";
+                else window.location.href = "dashboard.html";
             } else {
                 alert(data.message || "Login failed");
                 btn.innerText = "Login"; btn.disabled = false;
@@ -125,22 +129,41 @@ async function saveToDB(payload, token) {
 }
 
 /* =========================================
-   4. RECIPIENT UPLOAD ID
+   4. RECIPIENT UPLOAD ID + NEEDS ASSESSMENT
    ========================================= */
-let selectedFile = null;
+let selectedIdCard = null;
+let selectedProof = null;
 
 window.uploadID = async function() {
     const token = localStorage.getItem("aidlyToken");
     const btn = document.getElementById("uploadBtn");
+    const statusEl = document.getElementById("uploadStatus");
 
-    if (!selectedFile) return alert("Please select a file first!");
-    if (!btn) return console.error("uploadBtn not found!");
+    // Validate files
+    if (!selectedIdCard) return alert("Please upload your Ghana Card!");
+    if (!selectedProof) return alert("Please upload a proof of need document!");
 
-    btn.innerText = "Uploading...";
+    // Validate needs assessment fields
+    const dependents = document.getElementById("dependents")?.value;
+    const specificNeed = document.getElementById("specificNeed")?.value;
+    const situation = document.getElementById("situation")?.value?.trim();
+    const incomeRange = document.getElementById("incomeRange")?.value;
+
+    if (!specificNeed) return alert("Please select your primary need!");
+    if (!incomeRange) return alert("Please select your income range!");
+    if (!situation) return alert("Please describe your situation!");
+
+    btn.innerText = "Submitting...";
     btn.disabled = true;
+    if (statusEl) statusEl.innerText = "Uploading documents...";
 
     const formData = new FormData();
-    formData.append("idCard", selectedFile);
+    formData.append("idCard", selectedIdCard);
+    formData.append("proofOfNeed", selectedProof);
+    formData.append("dependents", dependents || 0);
+    formData.append("specificNeed", specificNeed);
+    formData.append("situation", situation);
+    formData.append("incomeRange", incomeRange);
 
     try {
         const res = await fetch(`${API_URL}/auth/verify-id`, {
@@ -150,58 +173,137 @@ window.uploadID = async function() {
         });
 
         if (res.ok) {
-            alert(" ID Uploaded successfully! Please wait for admin verification.");
-            selectedFile = null;
+            if (statusEl) statusEl.innerText = "✅ Submitted! Awaiting admin review.";
+            alert("✅ Verification request submitted! Admin will review and approve your account.");
+            selectedIdCard = null;
+            selectedProof = null;
             location.reload();
         } else {
             const data = await res.json();
-            alert(data.message || "Upload failed");
-            btn.innerText = "Upload ID Card";
+            if (statusEl) statusEl.innerText = "❌ " + (data.message || "Submission failed");
+            alert(data.message || "Submission failed");
+            btn.innerText = "Submit Verification Request →";
             btn.disabled = false;
         }
     } catch (err) {
+        console.error("Upload error:", err);
+        if (statusEl) statusEl.innerText = "❌ Connection error.";
         alert("Connection error. Is your backend running?");
-        btn.innerText = "Upload ID Card";
+        btn.innerText = "Submit Verification Request →";
         btn.disabled = false;
     }
 };
 
 /* =========================================
-   5. RECIPIENT: BROWSE AID
+   5. RECIPIENT: MY REQUESTS
    ========================================= */
-window.loadAvailableAid = async function() {
-    const list = document.getElementById("availableItemsList");
-    if (!list) return;
+window.loadMyRequests = async function() {
+    const list = document.getElementById("myRequestsList");
+    const token = localStorage.getItem("aidlyToken");
 
     try {
-        // Use the centralized API tool instead of raw fetch
-        const donations = await AidlyAPI.get("/donations");
-        
-        // Filter out money donations to show physical items
-        const items = donations.filter(d => d.type && d.type !== 'money');
-        
-        if (items.length === 0) {
-            list.innerHTML = "<p>No physical items available at the moment.</p>";
+        const res = await fetch(`${API_URL}/donations/my-requests`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        const requests = await res.json();
+
+        if (!requests || requests.length === 0) {
+            list.innerHTML = "<p>No active requests found.</p>";
             return;
         }
 
-        list.innerHTML = items.map(i => `
-            <div class="aid-card">
-                <div class="aid-info">
-                    <strong>${(i.type || 'unknown').toUpperCase()}</strong>
-                    <p>${i.description}</p>
-                </div>
-<button onclick="requestItem('${i._id}')" class="btn-request">Request</button>
+        list.innerHTML = requests.map(r => `
+            <div style="border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
+                <h4>📦 ${(r.type || 'ITEM').toUpperCase()}</h4>
+                <p>${r.description || ''}</p>
+                <p>Status: <strong style="color: ${r.status === 'Approved' ? '#22c55e' : r.status === 'Delivered' ? '#6366f1' : '#f59e0b'}">${r.status || 'Pending'}</strong></p>
+                ${r.status === 'Approved' ? `
+                    <button onclick="window.markAsReceived('${r._id}')" style="background: #3b82f6; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; margin-top: 8px;">
+                        ✅ Mark as Received
+                    </button>
+                ` : ''}
             </div>
         `).join('');
     } catch (err) {
-        console.error("Load Aid Error:", err);
-        list.innerHTML = "<p class='error-text'>Error connecting to the server. Please try again later.</p>";
+        list.innerHTML = "<p style='color: red;'>Error loading your requests.</p>";
     }
 };
 
+window.markAsReceived = async function(itemId) {
+    const token = localStorage.getItem("aidlyToken");
+    try {
+        const res = await fetch(`${API_URL}/donations/received/${itemId}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }
+        });
+        if (res.ok) {
+            alert("✅ Item marked as received!");
+            window.loadMyRequests();
+        } else {
+            const data = await res.json();
+            alert(data.message || "Failed to mark as received.");
+        }
+    } catch (err) { alert("Server error."); }
+};
+
 /* =========================================
-   6. ACTIVITY HISTORY
+   6. RECIPIENT: BROWSE AID
+   ========================================= */
+window.loadAvailableAid = async function() {
+    const token = localStorage.getItem("aidlyToken");
+    const list = document.getElementById("availableItemsList");
+    if (!list) return;
+
+    list.innerHTML = "<p>Loading items...</p>";
+
+    try {
+        const res = await fetch(`${API_URL}/donations`, {
+            headers: { "Authorization": `Bearer ${token}`, "Cache-Control": "no-cache" }
+        });
+        const donations = await res.json();
+
+        if (res.ok || res.status === 304) {
+            if (!Array.isArray(donations)) throw new Error("Invalid response");
+            const items = donations.filter(d => d && d.type && d.type !== 'money');
+
+            list.innerHTML = items.length ? items.map(i => `
+                <div style="background: white; padding: 15px; border: 1px solid #ddd; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <strong>${(i.type || 'item').toUpperCase()}</strong>
+                        <p style="margin: 5px 0; color: #64748b;">${i.description || 'No description'}</p>
+                    </div>
+                    <button onclick="requestItem('${i._id}')" style="background: #22c55e; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer;">Request</button>
+                </div>
+            `).join('') : "<p style='color: #64748b;'>No items available right now. Check back later!</p>";
+        } else {
+            list.innerHTML = "<p style='color: red;'>Could not load items.</p>";
+        }
+    } catch (err) {
+        list.innerHTML = "<p style='color: red;'>Error connecting to server.</p>";
+    }
+};
+
+window.requestItem = async function(itemId) {
+    if (!confirm("Are you sure you want to request this item?")) return;
+    const token = localStorage.getItem("aidlyToken");
+    try {
+        const res = await fetch(`${API_URL}/donations/request/${itemId}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }
+        });
+        if (res.ok) {
+            alert("Request sent! The donor will be notified.");
+            window.loadAvailableAid();
+            window.loadMyRequests();
+        } else {
+            const data = await res.json();
+            alert(data.message || "Failed to request item.");
+        }
+    } catch (err) { alert("Server error."); }
+};
+
+/* =========================================
+   7. ACTIVITY HISTORY
    ========================================= */
 window.loadDonationHistory = async function() {
     const token = localStorage.getItem("aidlyToken");
@@ -210,26 +312,23 @@ window.loadDonationHistory = async function() {
 
     try {
         const res = await fetch(`${API_URL}/donations/my`, {
-            headers: {
-                "Authorization": `Bearer ${token}`,
-                "Cache-Control": "no-cache"
-            }
+            headers: { "Authorization": `Bearer ${token}`, "Cache-Control": "no-cache" }
         });
 
         if (res.ok || res.status === 304) {
             const donations = await res.json();
-            if (donations.length === 0) {
+            if (!Array.isArray(donations) || donations.length === 0) {
                 historyList.innerHTML = "<p style='color: #64748b;'>No activity yet.</p>";
                 return;
             }
             historyList.innerHTML = donations.map(d => `
                 <div style="padding: 12px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between;">
                     <div>
-                        <strong>${d.type.toUpperCase()}</strong><br>
+                        <strong>${(d.type || 'DONATION').toUpperCase()}</strong><br>
                         <small>${d.type === 'money' ? '₵' + d.amount : (d.description || 'No description')}</small>
                     </div>
                     <div style="text-align: right;">
-                        <span style="display: block; font-size: 11px; color: #94a3b8;">${new Date(d.createdAt).toLocaleDateString()}</span>
+                        <span style="display: block; font-size: 11px; color: #94a3b8;">${new Date(d.createdAt || Date.now()).toLocaleDateString()}</span>
                         <span style="color: #22c55e; font-size: 12px; font-weight: bold;">${d.status || 'Pending'}</span>
                     </div>
                 </div>
@@ -241,112 +340,69 @@ window.loadDonationHistory = async function() {
 };
 
 /* =========================================
-   7. DASHBOARD INITIALIZATION
+   8. DASHBOARD INITIALIZATION
    ========================================= */
 document.addEventListener("DOMContentLoaded", () => {
     const rawUser = localStorage.getItem("aidlyUser");
+    const isDash = window.location.pathname.includes("dashboard.html");
+
+    if (!rawUser && isDash) { window.location.href = "login.html"; return; }
     if (!rawUser) return;
 
     const user = JSON.parse(rawUser);
-    const role = (user.role || "User").toLowerCase();
+    const role = (user.role || "").toLowerCase();
 
-    // 1. Update Welcome Text
-    const nameEl = document.getElementById("welcomeText");
-    if (nameEl) nameEl.innerText = `Welcome, ${user.name}`;
-
-    // 2. Update & Show Role Badge
-    const badge = document.getElementById("userRoleBadge");
-    if (badge) {
-        badge.innerText = role.toUpperCase();
-        badge.style.display = "inline-block";
-        
-        // Color coding
-        if (role === 'admin') badge.style.backgroundColor = "#dbeafe";
-        else if (role === 'donor') badge.style.backgroundColor = "#fef3c7";
-        else if (role === 'recipient') badge.style.backgroundColor = "#dcfce7";
+    if (document.getElementById("welcomeText")) {
+        document.getElementById("welcomeText").innerText = `Welcome, ${user.name}`;
+    }
+    if (document.getElementById("userRoleBadge")) {
+        document.getElementById("userRoleBadge").innerText = user.role;
+        document.getElementById("userRoleBadge").style.display = "inline-block";
+    }
+    if (document.getElementById("pointsBadge") && user.points > 0) {
+        document.getElementById("pointsBadge").style.display = "inline-block";
+        document.getElementById("userPoints").innerText = user.points;
     }
 
-    // 3. Role-Specific Section Visibility
     if (role === "admin") {
-        // (Your existing admin logic here)
-    } 
-    else if (role === "donor") {
+        window.location.href = "admin.html";
+    } else if (role === "volunteer") {
+        window.location.href = "volunteer_dashboard.html";
+    } else if (role === "donor") {
         const ds = document.getElementById("donorSection");
         if (ds) ds.style.display = "block";
+        window.loadDonationHistory();
+    } else if (role === "recipient") {
+        if (user.isVerified) {
+            const rd = document.getElementById("recipientDashboard");
+            if (rd) rd.style.display = "block";
+            window.loadMyRequests();
+        } else {
+            const vs = document.getElementById("verificationSection");
+            if (vs) {
+                vs.style.display = "block";
 
-        // Show Points Badge for Donors
-        const pb = document.getElementById("pointsBadge");
-        const pt = document.getElementById("userPoints");
-        if (pb && pt) {
-            pb.style.display = "inline-block";
-            pt.innerText = user.points || 0;
+                // Ghana Card file listener
+                const idCardInput = document.getElementById("idCardInput");
+                if (idCardInput) {
+                    idCardInput.addEventListener("change", function() {
+                        selectedIdCard = this.files[0];
+                        const nameEl = document.getElementById("idCardName");
+                        if (nameEl) nameEl.innerText = selectedIdCard ? `📎 ${selectedIdCard.name}` : "No file chosen";
+                    });
+                }
+
+                // Proof of Need file listener
+                const proofInput = document.getElementById("proofInput");
+                if (proofInput) {
+                    proofInput.addEventListener("change", function() {
+                        selectedProof = this.files[0];
+                        const nameEl = document.getElementById("proofName");
+                        if (nameEl) nameEl.innerText = selectedProof ? `📎 ${selectedProof.name}` : "No file chosen";
+                    });
+                }
+            }
         }
+        window.loadDonationHistory();
     }
-    else if (role === "recipient") {
-    const statusText = document.getElementById("uploadStatus"); // Make sure this ID is in your HTML
-    
-    if (user.isVerified) {
-        document.getElementById("recipientDashboard").style.display = "block";
-        if (statusText) statusText.innerHTML = "✅ Account Verified";
-    } else if (user.idCardPath) {
-        document.getElementById("verificationSection").style.display = "block";
-        if (statusText) statusText.innerHTML = "⏳ Verification Pending (Admin is reviewing your ID)";
-    } else {
-        document.getElementById("verificationSection").style.display = "block";
-        if (statusText) statusText.innerHTML = "❌ ID Required: Please upload your Ghana Card.";
-    }
-}
-
-    window.loadDonationHistory();
 });
-
-/* =========================================
-   8. RECIPIENT MANAGEMENT (Global Functions)
-   ========================================= */
-window.loadMyRequests = async function() {
-    const list = document.getElementById("myRequestsList");
-    if (!list) return;
-
-    try {
-        const requests = await AidlyAPI.get("/donations/my-requests");
-        if (requests.length === 0) {
-            list.innerHTML = "<p>You haven't requested any items yet.</p>";
-            return;
-        }
-
-        list.innerHTML = requests.map(r => `
-            <div class="request-card">
-                <h4>📦 ${r.type.toUpperCase()}</h4>
-                <p>Status: <strong style="color: ${r.status === 'Delivered' ? '#64748b' : '#22c55e'}">${r.status}</strong></p>
-                
-                ${r.status === 'Approved' ? `
-                    <div style="background: #f0fdf4; padding: 12px; border-radius: 8px; margin-bottom: 10px;">
-                        <p><strong>Donor:</strong> ${r.user ? r.user.name : 'Donor'}</p>
-                        <button onclick="confirmReceipt('${r._id}')" class="btn-approve" style="background: #3b82f6; width:100%; margin-top:10px;">
-                            Mark as Received
-                        </button>
-                    </div>
-                ` : ''}
-
-                ${r.status === 'Delivered' ? `
-                    <p style="color: #64748b; font-size: 12px; font-style: italic; margin-top: 10px;">
-                        Collected on ${new Date(r.updatedAt).toLocaleDateString()}
-                    </p>
-                ` : ''}
-            </div>
-        `).join('');
-    } catch (err) {
-        console.error("Error loading requests:", err);
-    }
-};
-
-window.confirmReceipt = async function(id) {
-    if (!confirm("Confirm you have received this item?")) return;
-    try {
-        await AidlyAPI.put(`/donations/received/${id}`, {});
-        alert("Awesome! Status updated to Delivered.");
-        window.loadMyRequests(); 
-    } catch (err) {
-        alert("Failed to update status.");
-    }
-};

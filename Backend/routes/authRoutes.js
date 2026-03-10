@@ -1,30 +1,43 @@
 import express from "express";
 const router = express.Router();
 
-// 1. IMPORT YOUR CONTROLLERS
-import { 
-    registerUser, 
-    loginUser, 
-    uploadIdCard, 
-    verifyRecipient, 
-    getPendingRecipients, 
-    getLeaderboard 
+import {
+    registerUser,
+    loginUser,
+    uploadIdCard,
+    verifyRecipient,
+    getPendingRecipients,
+    getLeaderboard,
+    getAllUsers,
+    getPendingVolunteers,
+    updateVolunteerProfile,
+    getMe
 } from "../controllers/authController.js";
 
-// 2. IMPORT THE MISSING PIECES (Note the curly braces for both!)
-import { protect } from "../middleware/authMiddleware.js"; 
-import { upload } from "../middleware/uploadMiddleware.js"; 
+import { protect } from "../middleware/authMiddleware.js";
+import { upload } from "../middleware/uploadMiddleware.js";
 
-// 3. YOUR ROUTES
 router.post("/register", registerUser);
 router.post("/login", loginUser);
 router.get("/leaderboard", getLeaderboard);
+router.get("/all-users", protect, getAllUsers);
+router.get("/pending-volunteers", protect, getPendingVolunteers);
+router.put("/volunteer-profile", protect, updateVolunteerProfile);
+router.get("/me", protect, getMe);
 
-// The Multer route
-router.post("/verify-id", protect, upload.single("idCard"), uploadIdCard);
+// Upload ID + Proof of Need — multer handles both files, then auth, then controller
+router.post(
+    "/verify-id",
+    upload.fields([
+        { name: "idCard", maxCount: 1 },
+        { name: "proofOfNeed", maxCount: 1 }
+    ]),
+    protect,
+    uploadIdCard
+);
 
 // Admin routes
-router.get("/pending-recipients", protect, getPendingRecipients);
-router.put("/verify/:userId", protect, verifyRecipient);
+router.get("/pending-verifications", protect, getPendingRecipients);
+router.put("/verify-user/:userId", protect, verifyRecipient);
 
 export default router;
