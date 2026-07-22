@@ -12,12 +12,19 @@ window.toggleFields = function() {
     const type = document.getElementById("donationType").value;
     const amountField = document.getElementById("amountField");
     const descField = document.getElementById("descriptionField");
+    const expiryField = document.getElementById("expiryField");
+    const sizeField = document.getElementById("sizeField");
+
     if (type === "money") {
         if (amountField) amountField.style.display = "block";
         if (descField) descField.style.display = "none";
+        if (expiryField) expiryField.style.display = "none";
+        if (sizeField) sizeField.style.display = "none";
     } else {
         if (amountField) amountField.style.display = "none";
         if (descField) descField.style.display = "block";
+        if (expiryField) expiryField.style.display = type === "food" ? "block" : "none";
+        if (sizeField) sizeField.style.display = type === "clothes" ? "block" : "none";
     }
 };
 
@@ -30,7 +37,7 @@ if (loginForm) {
         e.preventDefault();
         const email = document.getElementById("loginEmail").value;
         const password = document.getElementById("loginPassword").value;
-        const btn = e.target.querySelector("button");
+        const btn = e.target.querySelector("button[type='submit']") || e.target.querySelector("button");
         btn.innerText = "Logging in..."; btn.disabled = true;
 
         try {
@@ -67,6 +74,17 @@ if (registerForm) {
         const password = document.getElementById("regPassword").value;
         const rawRole = document.querySelector('input[name="role"]:checked').value;
         const role = rawRole.charAt(0).toUpperCase() + rawRole.slice(1);
+
+        // Password strength validation
+        if (password.length < 8) return alert("Password must be at least 8 characters!");
+        if (!/[A-Z]/.test(password)) return alert("Password must contain at least one uppercase letter!");
+        if (!/[0-9]/.test(password)) return alert("Password must contain at least one number!");
+        if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) return alert("Password must contain at least one special character!");
+
+        // Confirm password match
+        const confirm = document.getElementById("regConfirm")?.value;
+        if (confirm !== undefined && confirm !== password) return alert("Passwords do not match!");
+
         try {
             const res = await fetch(`${API_URL}/auth/register`, {
                 method: "POST",
@@ -90,8 +108,6 @@ window.donate = async function () {
     if (!token) return alert("Please login first!");
     if (!type) return alert("Please select a donation type!");
 
-    const payload = { type };
-
     if (type === "money") {
         const amount = document.getElementById("donationAmount").value;
         if (!amount) return alert("Enter amount");
@@ -102,28 +118,58 @@ window.donate = async function () {
             amount: amount * 100,
             currency: "GHS",
             callback: function(response) {
-                payload.amount = amount;
-                payload.transactionReference = response.reference;
-                saveToDB(payload, token);
+                saveMoneyDonation({ type, amount, transactionReference: response.reference }, token);
             },
             onClose: () => alert("Transaction cancelled")
         });
         handler.openIframe();
     } else {
-        payload.description = document.getElementById("donationDescription").value;
-        if (!payload.description) return alert("Please enter a description!");
-        saveToDB(payload, token);
+        const description = document.getElementById("donationDescription").value;
+        if (!description) return alert("Please enter a description!");
+        savePhysicalDonation(type, description, token);
     }
 };
 
-async function saveToDB(payload, token) {
+async function saveMoneyDonation(payload, token) {
     try {
         const res = await fetch(`${API_URL}/donations`, {
             method: "POST",
             headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
             body: JSON.stringify(payload)
         });
-        if (res.ok) { alert("Donation Recorded!"); location.reload(); }
+        if (res.ok) { alert("💰 Money donation recorded! A confirmation email has been sent. Thank you!"); location.reload(); }
+        else { const data = await res.json(); alert(data.message || "Failed to save donation"); }
+    } catch (err) { alert("Server error while saving donation."); }
+}
+
+async function savePhysicalDonation(type, description, token) {
+    const imageInput = document.getElementById("donationImageInput");
+    const formData = new FormData();
+    formData.append("type", type);
+    formData.append("description", description);
+
+    // Inventory fields
+    const quantity = document.getElementById("donationQuantity")?.value || 1;
+    formData.append("quantity", quantity);
+    if (type === "food") {
+        const expiry = document.getElementById("donationExpiry")?.value;
+        if (expiry) formData.append("expiryDate", expiry);
+    }
+    if (type === "clothes") {
+        const size = document.getElementById("donationSize")?.value;
+        if (size) formData.append("size", size);
+    }
+
+    if (imageInput && imageInput.files[0]) {
+        formData.append("donationImage", imageInput.files[0]);
+    }
+    try {
+        const res = await fetch(`${API_URL}/donations`, {
+            method: "POST",
+            headers: { "Authorization": `Bearer ${token}` },
+            body: formData
+        });
+        if (res.ok) { alert("✅ Donation recorded! Thank you!"); location.reload(); }
         else { const data = await res.json(); alert(data.message || "Failed to save donation"); }
     } catch (err) { alert("Server error while saving donation."); }
 }
@@ -139,11 +185,9 @@ window.uploadID = async function() {
     const btn = document.getElementById("uploadBtn");
     const statusEl = document.getElementById("uploadStatus");
 
-    // Validate files
     if (!selectedIdCard) return alert("Please upload your Ghana Card!");
     if (!selectedProof) return alert("Please upload a proof of need document!");
 
-    // Validate needs assessment fields
     const dependents = document.getElementById("dependents")?.value;
     const specificNeed = document.getElementById("specificNeed")?.value;
     const situation = document.getElementById("situation")?.value?.trim();
@@ -153,8 +197,7 @@ window.uploadID = async function() {
     if (!incomeRange) return alert("Please select your income range!");
     if (!situation) return alert("Please describe your situation!");
 
-    btn.innerText = "Submitting...";
-    btn.disabled = true;
+    btn.innerText = "Submitting..."; btn.disabled = true;
     if (statusEl) statusEl.innerText = "Uploading documents...";
 
     const formData = new FormData();
@@ -175,22 +218,18 @@ window.uploadID = async function() {
         if (res.ok) {
             if (statusEl) statusEl.innerText = "✅ Submitted! Awaiting admin review.";
             alert("✅ Verification request submitted! Admin will review and approve your account.");
-            selectedIdCard = null;
-            selectedProof = null;
+            selectedIdCard = null; selectedProof = null;
             location.reload();
         } else {
             const data = await res.json();
             if (statusEl) statusEl.innerText = "❌ " + (data.message || "Submission failed");
             alert(data.message || "Submission failed");
-            btn.innerText = "Submit Verification Request →";
-            btn.disabled = false;
+            btn.innerText = "Submit Verification Request →"; btn.disabled = false;
         }
     } catch (err) {
-        console.error("Upload error:", err);
         if (statusEl) statusEl.innerText = "❌ Connection error.";
         alert("Connection error. Is your backend running?");
-        btn.innerText = "Submit Verification Request →";
-        btn.disabled = false;
+        btn.innerText = "Submit Verification Request →"; btn.disabled = false;
     }
 };
 
@@ -200,7 +239,6 @@ window.uploadID = async function() {
 window.loadMyRequests = async function() {
     const list = document.getElementById("myRequestsList");
     const token = localStorage.getItem("aidlyToken");
-
     try {
         const res = await fetch(`${API_URL}/donations/my-requests`, {
             headers: { "Authorization": `Bearer ${token}` }
@@ -208,20 +246,22 @@ window.loadMyRequests = async function() {
         const requests = await res.json();
 
         if (!requests || requests.length === 0) {
-            list.innerHTML = "<p>No active requests found.</p>";
-            return;
+            list.innerHTML = "<p>No active requests found.</p>"; return;
         }
 
         list.innerHTML = requests.map(r => `
-            <div style="border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
-                <h4>📦 ${(r.type || 'ITEM').toUpperCase()}</h4>
-                <p>${r.description || ''}</p>
-                <p>Status: <strong style="color: ${r.status === 'Approved' ? '#22c55e' : r.status === 'Delivered' ? '#6366f1' : '#f59e0b'}">${r.status || 'Pending'}</strong></p>
-                ${r.status === 'Approved' ? `
-                    <button onclick="window.markAsReceived('${r._id}')" style="background: #3b82f6; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; margin-top: 8px;">
-                        ✅ Mark as Received
-                    </button>
-                ` : ''}
+            <div style="border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 12px; overflow: hidden;">
+                ${r.imagePath ? `<img src="http://127.0.0.1:5000${r.imagePath}" style="width:100%; height:140px; object-fit:cover;" onerror="this.style.display='none'">` : ''}
+                <div style="padding: 14px;">
+                    <h4 style="margin:0 0 4px;">📦 ${(r.type || 'ITEM').toUpperCase()}</h4>
+                    <p style="margin:0 0 6px; color:#64748b; font-size:14px;">${r.description || ''}</p>
+                    <p style="margin:0;">Status: <strong style="color: ${r.status === 'Approved' ? '#22c55e' : r.status === 'Delivered' ? '#6366f1' : '#f59e0b'}">${r.status || 'Pending'}</strong></p>
+                    ${r.status === 'Approved' ? `
+                        <button onclick="window.markAsReceived('${r._id}')" style="background: #3b82f6; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; margin-top: 10px; font-weight:600;">
+                            ✅ Mark as Received
+                        </button>
+                    ` : ''}
+                </div>
             </div>
         `).join('');
     } catch (err) {
@@ -236,13 +276,8 @@ window.markAsReceived = async function(itemId) {
             method: "PUT",
             headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }
         });
-        if (res.ok) {
-            alert("✅ Item marked as received!");
-            window.loadMyRequests();
-        } else {
-            const data = await res.json();
-            alert(data.message || "Failed to mark as received.");
-        }
+        if (res.ok) { alert("✅ Item marked as received!"); window.loadMyRequests(); }
+        else { const data = await res.json(); alert(data.message || "Failed to mark as received."); }
     } catch (err) { alert("Server error."); }
 };
 
@@ -253,7 +288,6 @@ window.loadAvailableAid = async function() {
     const token = localStorage.getItem("aidlyToken");
     const list = document.getElementById("availableItemsList");
     if (!list) return;
-
     list.innerHTML = "<p>Loading items...</p>";
 
     try {
@@ -265,14 +299,20 @@ window.loadAvailableAid = async function() {
         if (res.ok || res.status === 304) {
             if (!Array.isArray(donations)) throw new Error("Invalid response");
             const items = donations.filter(d => d && d.type && d.type !== 'money');
-
             list.innerHTML = items.length ? items.map(i => `
-                <div style="background: white; padding: 15px; border: 1px solid #ddd; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        <strong>${(i.type || 'item').toUpperCase()}</strong>
-                        <p style="margin: 5px 0; color: #64748b;">${i.description || 'No description'}</p>
+                <div class="aid-card">
+                    ${i.imagePath
+                        ? `<img src="http://127.0.0.1:5000${i.imagePath}" class="aid-card-img" onerror="this.style.display='none'">`
+                        : `<div class="aid-card-img-placeholder">${i.type === 'food' ? '🍱' : '👕'}</div>`
+                    }
+                    <div class="aid-card-body">
+                        <div class="aid-card-info">
+                            <strong>${(i.type || 'item').toUpperCase()}</strong>
+                            <p>${i.description || 'No description'}</p>
+                            <p class="donor-tag">By ${i.user?.name || 'Anonymous'}</p>
+                        </div>
+                        <button class="btn-request" onclick="requestItem('${i._id}')">Request</button>
                     </div>
-                    <button onclick="requestItem('${i._id}')" style="background: #22c55e; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer;">Request</button>
                 </div>
             `).join('') : "<p style='color: #64748b;'>No items available right now. Check back later!</p>";
         } else {
@@ -291,14 +331,8 @@ window.requestItem = async function(itemId) {
             method: "PUT",
             headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }
         });
-        if (res.ok) {
-            alert("Request sent! The donor will be notified.");
-            window.loadAvailableAid();
-            window.loadMyRequests();
-        } else {
-            const data = await res.json();
-            alert(data.message || "Failed to request item.");
-        }
+        if (res.ok) { alert("Request sent! The donor will be notified."); window.loadAvailableAid(); window.loadMyRequests(); }
+        else { const data = await res.json(); alert(data.message || "Failed to request item."); }
     } catch (err) { alert("Server error."); }
 };
 
@@ -309,21 +343,19 @@ window.loadDonationHistory = async function() {
     const token = localStorage.getItem("aidlyToken");
     const historyList = document.getElementById("donationHistory");
     if (!historyList || !token) return;
-
     try {
         const res = await fetch(`${API_URL}/donations/my`, {
             headers: { "Authorization": `Bearer ${token}`, "Cache-Control": "no-cache" }
         });
-
         if (res.ok || res.status === 304) {
             const donations = await res.json();
             if (!Array.isArray(donations) || donations.length === 0) {
-                historyList.innerHTML = "<p style='color: #64748b;'>No activity yet.</p>";
-                return;
+                historyList.innerHTML = "<p style='color: #64748b;'>No activity yet.</p>"; return;
             }
             historyList.innerHTML = donations.map(d => `
-                <div style="padding: 12px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between;">
-                    <div>
+                <div style="padding: 12px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+                    ${d.imagePath ? `<img src="http://127.0.0.1:5000${d.imagePath}" style="width:50px; height:50px; object-fit:cover; border-radius:8px; flex-shrink:0;" onerror="this.style.display='none'">` : ''}
+                    <div style="flex:1;">
                         <strong>${(d.type || 'DONATION').toUpperCase()}</strong><br>
                         <small>${d.type === 'money' ? '₵' + d.amount : (d.description || 'No description')}</small>
                     </div>
@@ -340,7 +372,57 @@ window.loadDonationHistory = async function() {
 };
 
 /* =========================================
-   8. DASHBOARD INITIALIZATION
+   8. IMPACT STATS (Donor)
+   ========================================= */
+window.loadMyImpact = async function() {
+    const token = localStorage.getItem("aidlyToken");
+    try {
+        const res = await fetch(`${API_URL}/auth/my-stats`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+
+        const totalEl = document.getElementById("myTotalDonations");
+        const deliveredEl = document.getElementById("myDelivered");
+        const pointsEl = document.getElementById("myPoints");
+
+        if (totalEl) totalEl.textContent = data.total || 0;
+        if (deliveredEl) deliveredEl.textContent = data.delivered || 0;
+        if (pointsEl) pointsEl.textContent = data.points || 0;
+
+        // Doughnut chart by type
+        const ctx = document.getElementById("myDonationsChart");
+        if (ctx && data.byType && data.byType.length > 0) {
+            const labels = data.byType.map(t => (t._id || 'other').toUpperCase());
+            const values = data.byType.map(t => t.count);
+            new Chart(ctx, {
+                type: "doughnut",
+                data: {
+                    labels,
+                    datasets: [{
+                        data: values,
+                        backgroundColor: ["#22c55e", "#3b82f6", "#f59e0b", "#ef4444"],
+                        borderWidth: 2,
+                        borderColor: "#fff"
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: "bottom", labels: { font: { family: "Inter", size: 12 } } },
+                        title: { display: true, text: "My Donations by Type", font: { family: "Inter", size: 13 } }
+                    }
+                }
+            });
+        }
+    } catch (err) {
+        console.log("Could not load impact stats");
+    }
+};
+
+/* =========================================
+   9. DASHBOARD INITIALIZATION
    ========================================= */
 document.addEventListener("DOMContentLoaded", () => {
     const rawUser = localStorage.getItem("aidlyUser");
@@ -372,6 +454,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const ds = document.getElementById("donorSection");
         if (ds) ds.style.display = "block";
         window.loadDonationHistory();
+        window.loadMyImpact();
     } else if (role === "recipient") {
         if (user.isVerified) {
             const rd = document.getElementById("recipientDashboard");
@@ -382,7 +465,6 @@ document.addEventListener("DOMContentLoaded", () => {
             if (vs) {
                 vs.style.display = "block";
 
-                // Ghana Card file listener
                 const idCardInput = document.getElementById("idCardInput");
                 if (idCardInput) {
                     idCardInput.addEventListener("change", function() {
@@ -392,7 +474,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     });
                 }
 
-                // Proof of Need file listener
                 const proofInput = document.getElementById("proofInput");
                 if (proofInput) {
                     proofInput.addEventListener("change", function() {

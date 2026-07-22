@@ -7,47 +7,42 @@
   <script src="https://js.paystack.co/v1/inline.js"></script>
   <link rel="stylesheet" href="css/style.css">
   <style>
-    .verify-form-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-      margin-bottom: 16px;
-    }
+    .verify-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
     .verify-form-grid .full-width { grid-column: 1 / -1; }
-    .verify-label {
-      font-weight: 600; font-size: 14px;
-      display: block; margin-bottom: 6px; color: #1e293b;
-    }
+    .verify-label { font-weight: 600; font-size: 14px; display: block; margin-bottom: 6px; color: #1e293b; }
     .verify-input, .verify-select, .verify-textarea {
       width: 100%; padding: 11px 14px; border-radius: 10px;
       border: 1px solid #e2e8f0; font-size: 14px;
-      font-family: inherit; box-sizing: border-box;
-      background: #f8fafc;
+      font-family: inherit; box-sizing: border-box; background: #f8fafc;
     }
     .verify-textarea { resize: vertical; min-height: 90px; }
-    .verify-input:focus, .verify-select:focus, .verify-textarea:focus {
-      outline: none; border-color: #22c55e; background: white;
-    }
+    .verify-input:focus, .verify-select:focus, .verify-textarea:focus { outline: none; border-color: #22c55e; background: white; }
     .file-upload-box {
-      border: 2px dashed #e2e8f0; border-radius: 12px;
-      padding: 20px; text-align: center; cursor: pointer;
-      background: #f8fafc; transition: 0.2s;
+      border: 2px dashed #e2e8f0; border-radius: 12px; padding: 20px;
+      text-align: center; cursor: pointer; background: #f8fafc; transition: 0.2s;
     }
     .file-upload-box:hover { border-color: #22c55e; background: #f0fdf4; }
     .file-upload-box .upload-icon { font-size: 28px; margin-bottom: 8px; }
     .file-upload-box p { font-size: 13px; color: #64748b; margin: 0; }
-    .file-upload-box .file-name {
-      font-size: 13px; color: #22c55e; font-weight: 600;
-      margin-top: 6px;
+    .file-upload-box .file-name { font-size: 13px; color: #22c55e; font-weight: 600; margin-top: 6px; }
+    .section-divider { border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0; }
+    .step-label { font-size: 13px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 14px; }
+    .donation-img-box {
+      border: 2px dashed #e2e8f0; border-radius: 12px; padding: 16px;
+      text-align: center; cursor: pointer; background: #f8fafc; transition: 0.2s; margin-bottom: 12px;
     }
-    .section-divider {
-      border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;
-    }
-    .step-label {
-      font-size: 13px; font-weight: 700; color: #64748b;
-      text-transform: uppercase; letter-spacing: 0.5px;
-      margin-bottom: 14px;
-    }
+    .donation-img-box:hover { border-color: #22c55e; background: #f0fdf4; }
+    .donation-img-box p { font-size: 13px; color: #64748b; margin: 4px 0 0; }
+    .donation-img-preview { width: 100%; max-height: 180px; object-fit: cover; border-radius: 10px; margin-top: 10px; display: none; }
+    .aid-card { background: white; border: 1px solid #e2e8f0; border-radius: 14px; margin-bottom: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+    .aid-card-img { width: 100%; height: 160px; object-fit: cover; background: #f1f5f9; display: block; }
+    .aid-card-img-placeholder { width: 100%; height: 160px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; font-size: 40px; color: #cbd5e1; }
+    .aid-card-body { padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .aid-card-info strong { font-size: 15px; color: #0f172a; display: block; margin-bottom: 3px; }
+    .aid-card-info p { font-size: 13px; color: #64748b; margin: 0; }
+    .aid-card-info .donor-tag { font-size: 12px; color: #94a3b8; margin-top: 4px; }
+    .btn-request { background: #22c55e; color: white; border: none; padding: 9px 16px; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 13px; white-space: nowrap; }
+    .nav-icon-btn { text-decoration: none; font-size: 20px; margin-right: 15px; }
   </style>
 </head>
 <body>
@@ -60,13 +55,13 @@
         </div>
         <span id="userRoleBadge" style="padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; margin-right: 15px; display: none;">ROLE</span>
         <span id="welcomeText" style="font-weight: 600; margin-right: 15px;">Welcome, Guest</span>
-
+        <a href="maps.html" title="Donation Centers" class="nav-icon-btn">📍</a>
+        <a href="impact.html" title="Impact Dashboard" class="nav-icon-btn">📊</a>
         <a href="notifications.html" id="notifBell" title="Notifications"
            style="position: relative; margin-right: 15px; text-decoration: none; font-size: 22px; line-height: 1;">
             🔔
             <span id="notifBadge" style="display:none; position: absolute; top: -6px; right: -6px; background: #ef4444; color: white; font-size: 10px; font-weight: 800; padding: 2px 5px; border-radius: 20px; min-width: 16px; text-align: center; line-height: 1.4;">0</span>
         </a>
-
         <button class="btn-logout" onclick="logout()">Logout</button>
     </div>
   </header>
@@ -76,9 +71,8 @@
     <!-- RECIPIENT: VERIFY ACCOUNT -->
     <div id="verificationSection" class="donation-box" style="display:none; border: 2px solid #fbbf24; max-width: 680px;">
       <h2>🪪 Verify Your Account</h2>
-      <p style="color:#64748b; margin-bottom:24px;">Complete all sections below to submit your verification request. Admin will review and approve your account.</p>
+      <p style="color:#64748b; margin-bottom:24px;">Complete all sections below to submit your verification request.</p>
 
-      <!-- STEP 1: ID Documents -->
       <p class="step-label">Step 1 — Identity Documents</p>
       <div class="verify-form-grid">
         <div>
@@ -103,7 +97,6 @@
 
       <hr class="section-divider">
 
-      <!-- STEP 2: Needs Assessment -->
       <p class="step-label">Step 2 — Needs Assessment</p>
       <div class="verify-form-grid">
         <div>
@@ -131,13 +124,10 @@
             <option value="Above ₵1000">Above ₵1000</option>
           </select>
         </div>
-        <div>
-          <label class="verify-label">&nbsp;</label>
-          <!-- spacer -->
-        </div>
+        <div></div>
         <div class="full-width">
           <label class="verify-label">Briefly describe your situation *</label>
-          <textarea id="situation" class="verify-textarea" placeholder="e.g. I am a single mother of 3 with no stable income. I lost my job in January and need help with food and clothing for my children..."></textarea>
+          <textarea id="situation" class="verify-textarea" placeholder="e.g. I am a single mother of 3..."></textarea>
         </div>
       </div>
 
@@ -154,9 +144,7 @@
         <p style="margin-bottom: 15px; color: #64748b;">Track the status of items you have requested.</p>
         <div id="myRequestsList"><p>Loading your requests...</p></div>
       </section>
-
       <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 30px 0;">
-
       <section>
         <h2>🎁 Browse Aid</h2>
         <p style="margin-bottom: 15px;">Items available from our donors.</p>
@@ -177,14 +165,54 @@
           <option value="food">Food</option>
           <option value="clothes">Clothes</option>
         </select>
-        <div id="amountField" style="display:none;"><input type="number" id="donationAmount" placeholder="Amount (₵)"></div>
-        <div id="descriptionField" style="display:none;"><textarea id="donationDescription" placeholder="Details..."></textarea></div>
+        <div id="amountField" style="display:none;">
+          <input type="number" id="donationAmount" placeholder="Amount (₵)">
+        </div>
+        <div id="descriptionField" style="display:none;">
+          <textarea id="donationDescription" placeholder="Details about the item..."></textarea>
+
+          <!-- Quantity -->
+          <label style="font-weight:600; font-size:13px; color:#475569; margin-bottom:4px; display:block;">Quantity</label>
+          <input type="number" id="donationQuantity" placeholder="e.g. 5" min="1" style="margin-bottom:12px;">
+
+          <!-- Food: Expiry Date -->
+          <div id="expiryField" style="display:none;">
+            <label style="font-weight:600; font-size:13px; color:#475569; margin-bottom:4px; display:block;">Expiry Date</label>
+            <input type="date" id="donationExpiry" style="margin-bottom:12px;">
+          </div>
+
+          <!-- Clothes: Size -->
+          <div id="sizeField" style="display:none;">
+            <label style="font-weight:600; font-size:13px; color:#475569; margin-bottom:4px; display:block;">Size</label>
+            <select id="donationSize" style="margin-bottom:12px;">
+              <option value="">Select size</option>
+              <option value="XS">XS</option>
+              <option value="S">S</option>
+              <option value="M">M</option>
+              <option value="L">L</option>
+              <option value="XL">XL</option>
+              <option value="XXL">XXL</option>
+              <option value="Mixed">Mixed sizes</option>
+            </select>
+          </div>
+
+          <div class="donation-img-box" onclick="document.getElementById('donationImageInput').click()" style="margin-top:12px;">
+            <div style="font-size:28px;">📷</div>
+            <p>Click to add a photo of the item <span style="color:#94a3b8;">(optional)</span></p>
+            <p id="donationImageName" style="font-size:13px; color:#22c55e; font-weight:600; margin-top:6px;">No image chosen</p>
+          </div>
+          <input type="file" id="donationImageInput" accept="image/*" style="display:none;">
+          <img id="donationImagePreview" class="donation-img-preview" alt="Item preview">
+        </div>
         <button type="submit">Submit Donation</button>
         <button type="button" class="btn-manage" onclick="window.location.href='donor_manage.html'">
           📥 Manage Incoming Requests
         </button>
         <button type="button" class="btn-leaderboard" onclick="window.location.href='leaderboard.html'">
           🏆 View Top Donors Leaderboard
+        </button>
+        <button type="button" onclick="window.location.href='impact.html'" style="background:#14532d !important;">
+          📊 View My Impact
         </button>
       </form>
     </div>
@@ -201,6 +229,21 @@
 
   <script src="js/script.js"></script>
   <script>
+    const donationImageInput = document.getElementById("donationImageInput");
+    if (donationImageInput) {
+        donationImageInput.addEventListener("change", function() {
+            const file = this.files[0];
+            const preview = document.getElementById("donationImagePreview");
+            const nameEl = document.getElementById("donationImageName");
+            if (file) {
+                nameEl.innerText = `📎 ${file.name}`;
+                const reader = new FileReader();
+                reader.onload = e => { preview.src = e.target.result; preview.style.display = "block"; };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+
     async function loadNotifCount() {
         const token = localStorage.getItem("aidlyToken");
         if (!token) return;
@@ -210,15 +253,9 @@
             });
             const data = await res.json();
             const badge = document.getElementById("notifBadge");
-            if (data.count > 0) {
-                badge.textContent = data.count;
-                badge.style.display = "inline-block";
-            } else {
-                badge.style.display = "none";
-            }
-        } catch (err) {
-            console.log("Could not load notification count");
-        }
+            if (data.count > 0) { badge.textContent = data.count; badge.style.display = "inline-block"; }
+            else badge.style.display = "none";
+        } catch {}
     }
     loadNotifCount();
   </script>

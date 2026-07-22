@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Donation Centers - Aidly</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    body { font-family: 'Inter', sans-serif; background: #f8fafc; margin: 0; }
+    .maps-nav {
+      background: white; padding: 16px 8%; display: flex;
+      justify-content: space-between; align-items: center;
+      border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; z-index: 1000;
+    }
+    .maps-nav .logo { font-size: 24px; font-weight: 800; color: #166534; text-decoration: none; }
+    .maps-nav .nav-right { display: flex; gap: 10px; align-items: center; }
+    .maps-wrapper { max-width: 1100px; margin: 0 auto; padding: 28px 20px; }
+    .page-title { font-size: 26px; font-weight: 800; color: #0f172a; margin-bottom: 6px; }
+    .page-subtitle { font-size: 14px; color: #64748b; margin-bottom: 24px; }
+    .maps-grid { display: grid; grid-template-columns: 1fr 340px; gap: 20px; }
+    #map { width: 100%; height: 520px; border-radius: 16px; border: 1px solid #e2e8f0; }
+    .centers-panel {
+      background: white; border-radius: 16px; border: 1px solid #e2e8f0;
+      overflow: hidden; display: flex; flex-direction: column;
+    }
+    .centers-panel-header {
+      padding: 16px 20px; border-bottom: 1px solid #e2e8f0;
+      font-weight: 700; font-size: 15px; color: #0f172a;
+      background: #f8fafc;
+    }
+    .centers-list { overflow-y: auto; flex: 1; max-height: 470px; }
+    .center-card {
+      padding: 14px 20px; border-bottom: 1px solid #f1f5f9;
+      cursor: pointer; transition: background 0.15s;
+    }
+    .center-card:hover { background: #f0fdf4; }
+    .center-card.active { background: #f0fdf4; border-left: 3px solid #22c55e; }
+    .center-card h4 { margin: 0 0 4px; font-size: 14px; font-weight: 700; color: #0f172a; }
+    .center-card p { margin: 0 0 3px; font-size: 12px; color: #64748b; }
+    .center-type {
+      display: inline-block; padding: 2px 8px; border-radius: 20px;
+      font-size: 11px; font-weight: 700; margin-top: 4px;
+    }
+    .type-donation_center { background: #dbeafe; color: #1d4ed8; }
+    .type-pickup_point { background: #fef3c7; color: #92400e; }
+    .type-distribution_center { background: #dcfce7; color: #166534; }
+
+    .add-center-box {
+      background: white; border-radius: 16px; border: 1px solid #e2e8f0;
+      padding: 24px; margin-top: 20px;
+    }
+    .add-center-box h3 { font-size: 16px; font-weight: 700; color: #0f172a; margin-bottom: 16px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+    .form-row.full { grid-template-columns: 1fr; }
+    .form-row.three { grid-template-columns: 1fr 1fr 1fr; }
+    .map-input {
+      width: 100%; padding: 10px 12px; border-radius: 10px;
+      border: 1px solid #e2e8f0; font-size: 13px;
+      font-family: 'Inter', sans-serif; box-sizing: border-box;
+      background: #f8fafc;
+    }
+    .map-input:focus { outline: none; border-color: #22c55e; background: white; }
+    .map-label { font-size: 12px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px; }
+    .btn-add {
+      background: #22c55e; color: white; border: none; padding: 11px 20px;
+      border-radius: 10px; font-weight: 700; font-size: 14px; cursor: pointer;
+      width: 100%; margin-top: 4px;
+    }
+    .btn-add:hover { filter: brightness(1.05); }
+    .btn-back {
+      background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0;
+      padding: 9px 18px; border-radius: 10px; font-weight: 600;
+      font-size: 14px; cursor: pointer; text-decoration: none;
+    }
+    .btn-logout {
+      background: #fef2f2; color: #ef4444; border: 1px solid #fecaca;
+      padding: 9px 18px; border-radius: 10px; font-weight: 600;
+      font-size: 14px; cursor: pointer;
+    }
+    .empty-state { text-align: center; padding: 40px 20px; color: #94a3b8; font-size: 14px; }
+    @media (max-width: 768px) {
+      .maps-grid { grid-template-columns: 1fr; }
+      #map { height: 300px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="maps-nav">
+  <a href="dashboard.html" class="logo">💚 Aidly</a>
+  <div class="nav-right">
+    <a href="dashboard.html" class="btn-back">← Back</a>
+    <button class="btn-logout" onclick="logout()">Logout</button>
+  </div>
+</nav>
+
+<div class="maps-wrapper">
+  <h1 class="page-title">📍 Donation Centers</h1>
+  <p class="page-subtitle">Find the nearest donation center or pickup point in your area.</p>
+
+  <div class="maps-grid">
+    <!-- MAP -->
+    <div id="map"></div>
+
+    <!-- CENTERS LIST -->
+    <div class="centers-panel">
+      <div class="centers-panel-header">📦 Nearby Centers <span id="centerCount" style="color:#64748b; font-weight:400;"></span></div>
+      <div class="centers-list" id="centersList">
+        <p class="empty-state">Loading centers...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADD CENTER (Admin only) -->
+  <div class="add-center-box" id="addCenterBox" style="display:none;">
+    <h3>➕ Add New Donation Center</h3>
+    <div class="form-row">
+      <div>
+        <label class="map-label">Center Name *</label>
+        <input type="text" id="centerName" class="map-input" placeholder="e.g. Tantra Hills Community Center">
+      </div>
+      <div>
+        <label class="map-label">Phone</label>
+        <input type="text" id="centerPhone" class="map-input" placeholder="e.g. 0241234567">
+      </div>
+    </div>
+    <div class="form-row full">
+      <div>
+        <label class="map-label">Address *</label>
+        <input type="text" id="centerAddress" class="map-input" placeholder="e.g. Tantra Hills, Accra">
+      </div>
+    </div>
+    <div class="form-row three">
+      <div>
+        <label class="map-label">Latitude *</label>
+        <input type="number" id="centerLat" class="map-input" placeholder="e.g. 5.6037" step="any">
+      </div>
+      <div>
+        <label class="map-label">Longitude *</label>
+        <input type="number" id="centerLng" class="map-input" placeholder="e.g. -0.1870" step="any">
+      </div>
+      <div>
+        <label class="map-label">Type</label>
+        <select id="centerType" class="map-input">
+          <option value="donation_center">Donation Center</option>
+          <option value="pickup_point">Pickup Point</option>
+          <option value="distribution_center">Distribution Center</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div>
+        <label class="map-label">Operating Hours</label>
+        <input type="text" id="centerHours" class="map-input" placeholder="e.g. Mon-Fri, 8AM-5PM">
+      </div>
+      <div>
+        <label class="map-label">Region</label>
+        <input type="text" id="centerRegion" class="map-input" placeholder="e.g. Greater Accra">
+      </div>
+    </div>
+    <button class="btn-add" onclick="addCenter()">➕ Add Center</button>
+  </div>
+</div>
+
+<script>
+  const API_URL = "http://127.0.0.1:5000/api";
+  const MAPS_API_KEY = "AIzaSyCpp0CDfQ6R-_bhFdbz4ntEtJY7Ba0_gXA";
+
+  const user = JSON.parse(localStorage.getItem("aidlyUser") || "{}");
+  const token = localStorage.getItem("aidlyToken");
+
+  function logout() { localStorage.clear(); window.location.href = "login.html"; }
+
+  // Show add center form for admins
+  if (user.role?.toLowerCase() === "admin") {
+    document.getElementById("addCenterBox").style.display = "block";
+  }
+
+  let map;
+  let markers = [];
+  let centers = [];
+  let activeCard = null;
+
+  // Load Google Maps
+  function initMap() {
+    map = new google.maps.Map(document.getElementById("map"), {
+      center: { lat: 5.6037, lng: -0.1870 }, // Accra
+      zoom: 13,
+      styles: [
+        { featureType: "poi", elementType: "labels", stylers: [{ visibility: "off" }] }
+      ]
+    });
+    loadCenters();
+  }
+
+  async function loadCenters() {
+    try {
+      const res = await fetch(`${API_URL}/locations`);
+      const data = await res.json();
+      centers = data.data || [];
+
+      document.getElementById("centerCount").textContent = `(${centers.length})`;
+
+      if (!centers.length) {
+        document.getElementById("centersList").innerHTML = "<p class='empty-state'>No centers added yet.</p>";
+        return;
+      }
+
+      renderCentersList();
+      renderMapMarkers();
+    } catch (err) {
+      document.getElementById("centersList").innerHTML = "<p class='empty-state' style='color:red;'>Error loading centers.</p>";
+    }
+  }
+
+  function renderCentersList() {
+    const list = document.getElementById("centersList");
+    list.innerHTML = centers.map((c, i) => `
+      <div class="center-card" id="card-${i}" onclick="focusCenter(${i})">
+        <h4>${c.name}</h4>
+        <p>📍 ${c.address}</p>
+        <p>🕐 ${c.operatingHours || "Hours not set"}</p>
+        ${c.contactPhone ? `<p>📞 ${c.contactPhone}</p>` : ""}
+        <span class="center-type type-${c.type}">${c.type.replace(/_/g, " ").toUpperCase()}</span>
+      </div>
+    `).join('');
+  }
+
+  function renderMapMarkers() {
+    // Clear old markers
+    markers.forEach(m => m.setMap(null));
+    markers = [];
+
+    const infoWindow = new google.maps.InfoWindow();
+
+    centers.forEach((c, i) => {
+      const marker = new google.maps.Marker({
+        position: { lat: c.gpsCoordinates.lat, lng: c.gpsCoordinates.lng },
+        map,
+        title: c.name,
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 10,
+          fillColor: "#22c55e",
+          fillOpacity: 1,
+          strokeColor: "#166534",
+          strokeWeight: 2,
+        }
+      });
+
+      marker.addListener("click", () => {
+        infoWindow.setContent(`
+          <div style="font-family:Inter,sans-serif; padding:4px; max-width:200px;">
+            <strong style="font-size:14px;">${c.name}</strong>
+            <p style="margin:4px 0; font-size:12px; color:#64748b;">📍 ${c.address}</p>
+            <p style="margin:4px 0; font-size:12px; color:#64748b;">🕐 ${c.operatingHours || "N/A"}</p>
+            ${c.contactPhone ? `<p style="margin:4px 0; font-size:12px; color:#64748b;">📞 ${c.contactPhone}</p>` : ""}
+          </div>
+        `);
+        infoWindow.open(map, marker);
+        focusCenter(i);
+      });
+
+      markers.push(marker);
+    });
+  }
+
+  function focusCenter(index) {
+    const c = centers[index];
+    map.panTo({ lat: c.gpsCoordinates.lat, lng: c.gpsCoordinates.lng });
+    map.setZoom(15);
+
+    // Highlight card
+    document.querySelectorAll(".center-card").forEach(el => el.classList.remove("active"));
+    const card = document.getElementById(`card-${index}`);
+    if (card) {
+      card.classList.add("active");
+      card.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+  }
+
+  async function addCenter() {
+    const name = document.getElementById("centerName").value.trim();
+    const address = document.getElementById("centerAddress").value.trim();
+    const lat = parseFloat(document.getElementById("centerLat").value);
+    const lng = parseFloat(document.getElementById("centerLng").value);
+    const type = document.getElementById("centerType").value;
+    const operatingHours = document.getElementById("centerHours").value.trim();
+    const contactPhone = document.getElementById("centerPhone").value.trim();
+    const region = document.getElementById("centerRegion").value.trim();
+
+    if (!name || !address || isNaN(lat) || isNaN(lng)) {
+      return alert("Please fill in name, address, latitude and longitude!");
+    }
+
+    try {
+      const res = await fetch(`${API_URL}/locations`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+        body: JSON.stringify({ name, address, region, gpsCoordinates: { lat, lng }, type, operatingHours, contactPhone })
+      });
+
+      if (res.ok) {
+        alert("✅ Center added successfully!");
+        // Clear form
+        ["centerName","centerAddress","centerLat","centerLng","centerHours","centerPhone","centerRegion"].forEach(id => {
+          document.getElementById(id).value = "";
+        });
+        loadCenters();
+      } else {
+        const d = await res.json();
+        alert(d.error || "Failed to add center.");
+      }
+    } catch (err) {
+      alert("Connection error.");
+    }
+  }
+</script>
+
+<!-- Load Google Maps -->
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCpp0CDfQ6R-_bhFdbz4ntEtJY7Ba0_gXA&callback=initMap" async defer></script>
+
+</body>
+</html>

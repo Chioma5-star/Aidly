@@ -6,6 +6,30 @@
   <title>Create Account - Aidly</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./css/style.css" />
+  <style>
+    .password-rules {
+      background: #f8fafc; border: 1px solid #e2e8f0;
+      border-radius: 10px; padding: 12px 16px; margin-top: -12px;
+      margin-bottom: 16px; font-size: 13px;
+    }
+    .rule {
+      display: flex; align-items: center; gap: 8px;
+      padding: 3px 0; color: #94a3b8; transition: color 0.2s;
+    }
+    .rule.pass { color: #22c55e; }
+    .rule.fail { color: #ef4444; }
+    .rule-icon { font-size: 14px; width: 16px; text-align: center; }
+    .strength-bar {
+      height: 6px; border-radius: 6px; background: #e2e8f0;
+      margin-bottom: 6px; overflow: hidden;
+    }
+    .strength-fill {
+      height: 100%; border-radius: 6px;
+      transition: width 0.3s, background 0.3s;
+      width: 0%;
+    }
+    .strength-label { font-size: 12px; font-weight: 600; margin-bottom: 10px; }
+  </style>
 </head>
 <body>
 
@@ -29,22 +53,38 @@
         <input type="email" id="regEmail" placeholder="name@email.com" required />
 
         <label for="regPassword">Password</label>
-        <input type="password" id="regPassword" placeholder="Create a strong password" required />
+        <input type="password" id="regPassword" placeholder="Create a strong password" required oninput="checkPassword(this.value)" />
+
+        <!-- Strength bar -->
+        <div class="strength-bar"><div class="strength-fill" id="strengthFill"></div></div>
+        <div class="strength-label" id="strengthLabel" style="color:#94a3b8;">Enter a password</div>
+
+        <!-- Rules -->
+        <div class="password-rules">
+          <div class="rule" id="rule-length"><span class="rule-icon">○</span> At least 8 characters</div>
+          <div class="rule" id="rule-upper"><span class="rule-icon">○</span> At least one uppercase letter (A-Z)</div>
+          <div class="rule" id="rule-number"><span class="rule-icon">○</span> At least one number (0-9)</div>
+          <div class="rule" id="rule-special"><span class="rule-icon">○</span> At least one special character (!@#$%)</div>
+        </div>
+
+        <label for="regConfirm">Confirm Password</label>
+        <input type="password" id="regConfirm" placeholder="Re-enter your password" required />
+        <p id="matchMsg" style="font-size:13px; margin-top:-14px; margin-bottom:14px; display:none;"></p>
 
         <label>I want to join as:</label>
-<div style="margin-bottom: 20px; display: flex; flex-direction: column; gap: 10px; padding: 15px; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
-  <label style="font-weight: 500; display: flex; align-items: center; gap: 10px; margin: 0; cursor: pointer;">
-    <input type="radio" name="role" value="Donor" checked style="width: auto; margin: 0;"> Donor
-  </label>
-  <label style="font-weight: 500; display: flex; align-items: center; gap: 10px; margin: 0; cursor: pointer;">
-    <input type="radio" name="role" value="Recipient" style="width: auto; margin: 0;"> Recipient
-  </label>
-  <label style="font-weight: 500; display: flex; align-items: center; gap: 10px; margin: 0; cursor: pointer;">
-    <input type="radio" name="role" value="Volunteer" style="width: auto; margin: 0;"> Volunteer
-  </label>
-</div>
+        <div style="margin-bottom: 20px; display: flex; flex-direction: column; gap: 10px; padding: 15px; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
+          <label style="font-weight: 500; display: flex; align-items: center; gap: 10px; margin: 0; cursor: pointer;">
+            <input type="radio" name="role" value="Donor" checked style="width: auto; margin: 0;"> 🎁 Donor — I want to donate
+          </label>
+          <label style="font-weight: 500; display: flex; align-items: center; gap: 10px; margin: 0; cursor: pointer;">
+            <input type="radio" name="role" value="Recipient" style="width: auto; margin: 0;"> 🤲 Recipient — I need aid
+          </label>
+          <label style="font-weight: 500; display: flex; align-items: center; gap: 10px; margin: 0; cursor: pointer;">
+            <input type="radio" name="role" value="Volunteer" style="width: auto; margin: 0;"> 🚚 Volunteer — I want to deliver
+          </label>
+        </div>
 
-        <button type="submit">Create Account</button>
+        <button type="submit" id="registerBtn">Create Account</button>
       </form>
 
       <div style="margin-top: 25px; text-align: center;">
@@ -54,6 +94,58 @@
       </div>
     </div>
   </main>
+
+  <script>
+    function checkPassword(val) {
+      const rules = {
+        length:  val.length >= 8,
+        upper:   /[A-Z]/.test(val),
+        number:  /[0-9]/.test(val),
+        special: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(val),
+      };
+
+      // Update rule indicators
+      Object.entries(rules).forEach(([key, pass]) => {
+        const el = document.getElementById(`rule-${key}`);
+        if (!el) return;
+        el.className = "rule " + (pass ? "pass" : (val.length > 0 ? "fail" : ""));
+        el.querySelector(".rule-icon").textContent = pass ? "✅" : (val.length > 0 ? "❌" : "○");
+      });
+
+      // Calculate strength
+      const score = Object.values(rules).filter(Boolean).length;
+      const fill = document.getElementById("strengthFill");
+      const label = document.getElementById("strengthLabel");
+
+      const levels = [
+        { w: "0%",   bg: "#e2e8f0", text: "Enter a password",  color: "#94a3b8" },
+        { w: "25%",  bg: "#ef4444", text: "Weak",              color: "#ef4444" },
+        { w: "50%",  bg: "#f59e0b", text: "Fair",              color: "#f59e0b" },
+        { w: "75%",  bg: "#3b82f6", text: "Good",              color: "#3b82f6" },
+        { w: "100%", bg: "#22c55e", text: "Strong ✅",         color: "#22c55e" },
+      ];
+
+      const level = val.length === 0 ? levels[0] : levels[score];
+      fill.style.width = level.w;
+      fill.style.background = level.bg;
+      label.textContent = level.text;
+      label.style.color = level.color;
+    }
+
+    // Confirm password match check
+    document.getElementById("regConfirm").addEventListener("input", function() {
+      const pw = document.getElementById("regPassword").value;
+      const msg = document.getElementById("matchMsg");
+      msg.style.display = "block";
+      if (this.value === pw) {
+        msg.textContent = "✅ Passwords match";
+        msg.style.color = "#22c55e";
+      } else {
+        msg.textContent = "❌ Passwords do not match";
+        msg.style.color = "#ef4444";
+      }
+    });
+  </script>
 
   <script src="./js/script.js"></script>
 </body>

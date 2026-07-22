@@ -1,5 +1,5 @@
 /* =========================
-   MODERN BASE & Figma Colors
+   MODERN BASE
    ========================= */
 * {
   margin: 0;
@@ -33,7 +33,7 @@ body {
 .logo {
   font-size: 24px;
   font-weight: 800;
-  color: #166534;
+  color: #14532d;
 }
 
 .nav-auth { display: flex; align-items: center; gap: 15px; }
@@ -41,210 +41,85 @@ body {
 /* =========================
    LANDING PAGE SECTIONS
    ========================= */
-.hero { text-align: center; padding: 120px 20px; background: white; }
-.hero h1 { font-size: 48px; font-weight: 800; margin-bottom: 24px; color: #0f172a; }
-.hero p { font-size: 18px; color: #64748b; max-width: 700px; margin: 0 auto 50px; line-height: 1.6; }
-.hero-btns { display: flex; justify-content: center; gap: 20px; }
-
-.stats-bar {
-  background: #22c55e;
-  display: flex;
-  justify-content: space-around;
-  padding: 60px 8%;
-  color: white;
-}
-
-.how-it-works { padding: 100px 8%; text-align: center; }
-.steps-grid { display: flex; gap: 30px; margin-top: 50px; }
-.step-card { background: white; padding: 40px; border-radius: 24px; flex: 1; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
-
-/* =========================
-   DASHBOARD & FORM CARDS
-   ========================= */
-.container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 24px;
-  justify-content: center;
-  padding: 40px 5%;
-  width: 100%;
-}
-
-.donation-box {
-  background: white;
-  flex: 1;
-  min-width: 320px;
-  max-width: 480px;
-  padding: 30px;
-  border-radius: 24px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-  display: flex;
-  flex-direction: column;
-}
-
-/* =========================
-   BUTTONS & INPUTS
-   ========================= */
-button, .btn-primary, .btn-get-started {
-  background: #22c55e;
-  color: white;
-  padding: 12px 24px;
-  border-radius: 12px;
-  font-weight: 600;
-  border: none;
-  cursor: pointer;
-  transition: 0.3s;
-  position: relative;
-  z-index: 10; /* Fixed unclickable buttons */
-}
-
-.btn-secondary, .btn-login-outline {
-  background: #f1f5f9;
-  color: #1e293b;
-  border: 1px solid #e2e8f0;
-  padding: 12px 24px;
-  border-radius: 12px;
-  cursor: pointer;
-}
-
-.logout-btn { background: #ef4444; color: white; width: auto; }
-
-input, select, textarea {
-  width: 100%; 
-  padding: 12px 16px; 
-  margin-bottom: 20px;
-  border-radius: 12px; 
-  border: 1px solid #e2e8f0; 
-  background: #f8fafc;
-}
-
-/* =========================
-   FOOTER
-   ========================= */
-.footer { background: #0f172a; color: white; padding: 60px 8% 20px; }
-.footer-content { display: flex; justify-content: space-between; }
-.footer-bottom { border-top: 1px solid #334155; padding-top: 20px; text-align: center; margin-top: 40px; color: #64748b; }
-
-/* =========================
-   CTA SECTION FIX
-   ========================= */
-.cta-section {
-  background: linear-gradient(135deg, #22c55e, #3b82f6);
-  padding: 100px 20px;
+.hero {
   text-align: center;
-  color: white;
-}
-
-.btn-white {
+  padding: 120px 20px;
   background: white;
-  color: #166534;
-  padding: 16px 48px;
-  border-radius: 12px;
-  border: none;
-  font-weight: 700;
-  cursor: pointer;
-  margin-top: 30px;
-  width: auto;
-  display: inline-block;
-  position: relative;
-  z-index: 10;
 }
-.cta-section {
-  background: linear-gradient(135deg, #22c55e, #3b82f6);
-  padding: 100px 20px;
-  text-align: center;
-  color: white;
-}
-.btn-white {
-  background: white; color: #166534; padding: 16px 48px;
-  border-radius: 12px; border: none; font-weight: 700;
-  cursor: pointer; margin-top: 30px; display: inline-block;
-}
-.btn-admin {
-    background-color: #6366f1; /* Indigo color */
-    color: white;
-    padding: 8px 16px;
-    border-radius: 6px;
-    border: none;
-    cursor: pointer;
-    font-weight: bold;
-    margin-left: 10px;
-}
-.btn-admin:hover {
-    background-color: #4f46e5;
-}
-.btn-secondary {
-    background-color: #64748b;
-    color: white;
-    padding: 8px 16px;
-    border-radius: 6px;
-    border: none;
-    cursor: pointer;
-    font-weight: bold;
-}
-.btn-secondary:hover {
-    background-color: #475569;
-}
-/* =========================
-   MODERN BASE & Figma Colors
-   ========================= */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: 'Inter', sans-serif;
-}
-
-body {
-  background-color: #f8fafc;
-  color: #1e293b;
-  min-height: 100vh;
-}
-
-/* =========================
-   HEADER & NAVIGATION
-   ========================= */
-.header {
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(10px);
-  padding: 16px 8%;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid #e2e8f0;
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-}
-
-.logo {
-  font-size: 24px;
+.hero h1 {
+  font-size: 48px;
   font-weight: 800;
-  color: #166534;
+  margin-bottom: 24px;
+  color: #0f172a;
 }
-
-.nav-auth { display: flex; align-items: center; gap: 15px; }
-
-/* =========================
-   LANDING PAGE SECTIONS
-   ========================= */
-.hero { text-align: center; padding: 120px 20px; background: white; }
-.hero h1 { font-size: 48px; font-weight: 800; margin-bottom: 24px; color: #0f172a; }
-.hero p { font-size: 18px; color: #64748b; max-width: 700px; margin: 0 auto 50px; line-height: 1.6; }
+.hero p {
+  font-size: 18px;
+  color: #64748b;
+  max-width: 700px;
+  margin: 0 auto 50px;
+  line-height: 1.6;
+}
 .hero-btns { display: flex; justify-content: center; gap: 20px; }
 
 .stats-bar {
-  background: #22c55e;
+  background: #14532d;
   display: flex;
   justify-content: space-around;
   padding: 60px 8%;
   color: white;
 }
 
+.stat-item h2 { font-size: 42px; font-weight: 800; }
+.stat-item p { font-size: 14px; opacity: 0.85; margin-top: 6px; }
+
 .how-it-works { padding: 100px 8%; text-align: center; }
 .steps-grid { display: flex; gap: 30px; margin-top: 50px; }
-.step-card { background: white; padding: 40px; border-radius: 24px; flex: 1; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+.step-card {
+  background: white;
+  padding: 40px;
+  border-radius: 24px;
+  flex: 1;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+}
+
+/* =========================
+   CTA SECTION
+   ========================= */
+.cta-section {
+  background: linear-gradient(135deg, #14532d, #166534);
+  padding: 100px 20px;
+  text-align: center;
+  color: white;
+}
+
+.btn-white {
+  background: white;
+  color: #14532d;
+  padding: 16px 48px;
+  border-radius: 12px;
+  border: none;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 30px;
+  display: inline-block;
+  width: auto;
+  position: relative;
+  z-index: 10;
+}
+.btn-white:hover { background: #f0fdf4; }
+
+/* =========================
+   FOOTER
+   ========================= */
+.footer { background: #0f172a; color: white; padding: 60px 8% 20px; }
+.footer-content { display: flex; justify-content: space-between; }
+.footer-bottom {
+  border-top: 1px solid #334155;
+  padding-top: 20px;
+  text-align: center;
+  margin-top: 40px;
+  color: #64748b;
+}
 
 /* =========================
    DASHBOARD & FORM CARDS
@@ -272,10 +147,10 @@ body {
 }
 
 /* =========================
-   BUTTONS & INPUTS
+   BUTTONS
    ========================= */
 button, .btn-primary, .btn-get-started {
-  background: #22c55e;
+  background: #14532d;
   color: white;
   padding: 12px 24px;
   border-radius: 12px;
@@ -284,7 +159,12 @@ button, .btn-primary, .btn-get-started {
   cursor: pointer;
   transition: 0.3s;
   position: relative;
-  z-index: 10; /* Fixed unclickable buttons */
+  z-index: 10;
+}
+
+button:hover, .btn-primary:hover, .btn-get-started:hover {
+  background: #166534;
+  transform: translateY(-1px);
 }
 
 .btn-secondary, .btn-login-outline {
@@ -294,129 +174,115 @@ button, .btn-primary, .btn-get-started {
   padding: 12px 24px;
   border-radius: 12px;
   cursor: pointer;
+  font-weight: 600;
 }
 
-.logout-btn { background: #ef4444; color: white; width: auto; }
-
-input, select, textarea {
-  width: 100%; 
-  padding: 12px 16px; 
-  margin-bottom: 20px;
-  border-radius: 12px; 
-  border: 1px solid #e2e8f0; 
-  background: #f8fafc;
+.btn-secondary:hover, .btn-login-outline:hover {
+  background: #e2e8f0;
 }
 
-/* =========================
-   FOOTER
-   ========================= */
-.footer { background: #0f172a; color: white; padding: 60px 8% 20px; }
-.footer-content { display: flex; justify-content: space-between; }
-.footer-bottom { border-top: 1px solid #334155; padding-top: 20px; text-align: center; margin-top: 40px; color: #64748b; }
-
-/* =========================
-   CTA SECTION FIX
-   ========================= */
-.cta-section {
-  background: linear-gradient(135deg, #22c55e, #3b82f6);
-  padding: 100px 20px;
-  text-align: center;
-  color: white;
+.logout-btn, .btn-logout {
+  background: #fef2f2 !important;
+  color: #ef4444 !important;
+  border: 1px solid #fecaca !important;
+  padding: 8px 16px !important;
+  border-radius: 10px !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+  width: auto !important;
+  cursor: pointer !important;
 }
 
-.btn-white {
-  background: white;
-  color: #166534;
-  padding: 16px 48px;
-  border-radius: 12px;
-  border: none;
-  font-weight: 700;
-  cursor: pointer;
-  margin-top: 30px;
-  width: auto;
-  display: inline-block;
-  position: relative;
-  z-index: 10;
-}
-.cta-section {
-  background: linear-gradient(135deg, #22c55e, #3b82f6);
-  padding: 100px 20px;
-  text-align: center;
-  color: white;
-}
-.btn-white {
-  background: white; color: #166534; padding: 16px 48px;
-  border-radius: 12px; border: none; font-weight: 700;
-  cursor: pointer; margin-top: 30px; display: inline-block;
-}
 .btn-admin {
-    background-color: #6366f1; /* Indigo color */
-    color: white;
-    padding: 8px 16px;
-    border-radius: 6px;
-    border: none;
-    cursor: pointer;
-    font-weight: bold;
-    margin-left: 10px;
+  background: #14532d;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  margin-left: 10px;
 }
-.btn-admin:hover {
-    background-color: #4f46e5;
+.btn-admin:hover { background: #166534; }
+
+/* =========================
+   INPUTS
+   ========================= */
+input, select, textarea {
+  width: 100%;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
 }
-.btn-secondary {
-    background-color: #64748b;
-    color: white;
-    padding: 8px 16px;
-    border-radius: 6px;
-    border: none;
-    cursor: pointer;
-    font-weight: bold;
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: #22c55e;
+  background: white;
 }
-.btn-secondary:hover {
-    background-color: #475569;
-}
-/* Container for the buttons to give them breathing room */
+
+/* =========================
+   DONOR SECTION BUTTONS
+   ========================= */
 #donorSection form {
-    display: flex;
-    flex-direction: column;
-    gap: 12px; /* Adds space between each button/input */
-    margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 20px;
 }
 
-/* Base style for all dashboard buttons */
 #donorSection button {
-    width: 100%; /* Makes all buttons the same width */
-    padding: 14px;
-    border: none;
-    border-radius: 8px;
-    font-weight: 700;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: transform 0.2s, background 0.2s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  transition: transform 0.2s, filter 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-/* Submit Button - Primary Action */
-button[type="submit"] {
-    background-color: #22c55e !important;
-    color: white;
-}
-
-/* Manage Requests - Secondary Action */
-.btn-manage {
-    background-color: #3b82f6 !important;
-    color: white;
-}
-
-/* Leaderboard - Tertiary Action */
-.btn-leaderboard {
-    background-color: #059669 !important;
-    color: white;
-}
-
-/* Hover effect for better UX */
 #donorSection button:hover {
-    transform: translateY(-2px);
-    filter: brightness(1.1);
+  transform: translateY(-2px);
+  filter: brightness(1.08);
+}
+
+button[type="submit"] {
+  background: #14532d !important;
+  color: white;
+}
+
+.btn-manage {
+  background: #1d4ed8 !important;
+  color: white !important;
+}
+
+.btn-leaderboard {
+  background: #14532d !important;
+  color: white !important;
+}
+
+/* =========================
+   SECTION TITLE
+   ========================= */
+.section-title {
+  font-size: 32px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+/* =========================
+   USER INFO
+   ========================= */
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }

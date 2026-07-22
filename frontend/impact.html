@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Impact Dashboard - Aidly</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    body { font-family: 'Inter', sans-serif; background: #f8fafc; }
+    .impact-nav {
+      background: white; padding: 16px 8%; display: flex;
+      justify-content: space-between; align-items: center;
+      border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; z-index: 1000;
+    }
+    .impact-nav .logo { font-size: 24px; font-weight: 800; color: #14532d; }
+    .impact-nav .nav-right { display: flex; gap: 10px; align-items: center; }
+    .btn-back {
+      background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0;
+      padding: 9px 18px; border-radius: 10px; font-weight: 600;
+      font-size: 14px; cursor: pointer; text-decoration: none;
+    }
+    .btn-logout {
+      background: #fef2f2; color: #ef4444; border: 1px solid #fecaca;
+      padding: 9px 18px; border-radius: 10px; font-weight: 600; font-size: 14px; cursor: pointer;
+    }
+
+    .impact-wrapper { max-width: 1000px; margin: 0 auto; padding: 32px 20px; }
+    .page-title { font-size: 26px; font-weight: 800; color: #0f172a; margin-bottom: 4px; }
+    .page-subtitle { font-size: 14px; color: #64748b; margin-bottom: 28px; }
+
+    /* Stat cards */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; margin-bottom: 28px; }
+    .stat-card {
+      background: white; border: 1px solid #e2e8f0; border-radius: 14px;
+      padding: 20px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    .stat-card .icon { font-size: 28px; margin-bottom: 8px; }
+    .stat-card .val { font-size: 30px; font-weight: 800; color: #0f172a; }
+    .stat-card .lbl { font-size: 12px; color: #64748b; margin-top: 3px; font-weight: 500; }
+
+    /* Charts */
+    .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 24px; }
+    .chart-card {
+      background: white; border: 1px solid #e2e8f0; border-radius: 14px;
+      padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    .chart-card h4 { font-size: 14px; font-weight: 700; color: #0f172a; margin: 0 0 16px; }
+
+    /* Role summary boxes */
+    .role-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 28px; }
+    .role-box { border-radius: 12px; padding: 16px; text-align: center; }
+    .role-box .rval { font-size: 26px; font-weight: 800; }
+    .role-box .rlbl { font-size: 12px; margin-top: 3px; }
+
+    .section-title { font-size: 16px; font-weight: 700; color: #0f172a; margin-bottom: 14px; }
+
+    /* Donor-only section */
+    .donor-highlight {
+      background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 14px;
+      padding: 20px; margin-bottom: 24px;
+    }
+    .donor-highlight h3 { font-size: 15px; font-weight: 700; color: #14532d; margin-bottom: 14px; }
+    .donor-stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .donor-stat { background: white; border-radius: 10px; padding: 14px; text-align: center; border: 1px solid #d1fae5; }
+    .donor-stat .dval { font-size: 24px; font-weight: 800; color: #14532d; }
+    .donor-stat .dlbl { font-size: 12px; color: #64748b; margin-top: 2px; }
+
+    @media (max-width: 640px) {
+      .charts-grid { grid-template-columns: 1fr; }
+      .role-grid { grid-template-columns: repeat(2, 1fr); }
+      .donor-stats-row { grid-template-columns: repeat(3, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="impact-nav">
+  <div class="logo">💚 Aidly</div>
+  <div class="nav-right">
+    <a href="dashboard.html" class="btn-back">← Back</a>
+    <button class="btn-logout" onclick="logout()">Logout</button>
+  </div>
+</nav>
+
+<div class="impact-wrapper">
+  <h1 class="page-title">📊 Impact Dashboard</h1>
+  <p class="page-subtitle" id="impactSubtitle">Loading your impact data...</p>
+
+  <!-- DONOR: My Personal Stats -->
+  <div id="donorHighlight" class="donor-highlight" style="display:none;">
+    <h3>⭐ My Personal Impact</h3>
+    <div class="donor-stats-row">
+      <div class="donor-stat"><div class="dval" id="myTotal">-</div><div class="dlbl">My Donations</div></div>
+      <div class="donor-stat"><div class="dval" id="myDelivered">-</div><div class="dlbl">Delivered</div></div>
+      <div class="donor-stat"><div class="dval" id="myPoints">-</div><div class="dlbl">Points Earned</div></div>
+    </div>
+    <div style="max-width:260px; margin: 20px auto 0;">
+      <canvas id="myDonationsChart"></canvas>
+    </div>
+  </div>
+
+  <!-- PLATFORM STATS (all roles) -->
+  <p class="section-title">🌍 Platform Overview</p>
+  <div class="stats-grid">
+    <div class="stat-card"><div class="icon">👥</div><div class="val" id="statTotalUsers">-</div><div class="lbl">Total Users</div></div>
+    <div class="stat-card"><div class="icon">🎁</div><div class="val" id="statTotalDonations">-</div><div class="lbl">Total Donations</div></div>
+    <div class="stat-card"><div class="icon">✅</div><div class="val" id="statDelivered">-</div><div class="lbl">Delivered</div></div>
+    <div class="stat-card"><div class="icon">🚚</div><div class="val" id="statVolunteers">-</div><div class="lbl">Volunteers</div></div>
+  </div>
+
+  <!-- ROLE BREAKDOWN -->
+  <p class="section-title">👤 Users by Role</p>
+  <div class="role-grid">
+    <div class="role-box" style="background:#dbeafe;">
+      <div class="rval" id="roleDonors" style="color:#1d4ed8;">-</div>
+      <div class="rlbl" style="color:#1d4ed8;">🎁 Donors</div>
+    </div>
+    <div class="role-box" style="background:#dcfce7;">
+      <div class="rval" id="roleRecipients" style="color:#166534;">-</div>
+      <div class="rlbl" style="color:#166534;">🤲 Recipients</div>
+    </div>
+    <div class="role-box" style="background:#fef3c7;">
+      <div class="rval" id="roleVolunteers" style="color:#92400e;">-</div>
+      <div class="rlbl" style="color:#92400e;">🚚 Volunteers</div>
+    </div>
+    <div class="role-box" style="background:#ede9fe;">
+      <div class="rval" id="roleAdmins" style="color:#6d28d9;">-</div>
+      <div class="rlbl" style="color:#6d28d9;">🛡️ Admins</div>
+    </div>
+  </div>
+
+  <!-- CHARTS -->
+  <div class="charts-grid">
+    <div class="chart-card">
+      <h4>📦 Donations by Type</h4>
+      <canvas id="chartByType"></canvas>
+    </div>
+    <div class="chart-card">
+      <h4>📋 Donations by Status</h4>
+      <canvas id="chartByStatus"></canvas>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const API_URL = "http://127.0.0.1:5000/api";
+  const token = localStorage.getItem("aidlyToken");
+  const user = JSON.parse(localStorage.getItem("aidlyUser") || "{}");
+
+  function logout() { localStorage.clear(); window.location.href = "login.html"; }
+
+  if (!token) window.location.href = "login.html";
+
+  const role = (user.role || "").toLowerCase();
+  document.getElementById("impactSubtitle").textContent =
+    role === "admin" ? "Platform-wide stats and charts." :
+    role === "donor" ? "See how your donations are making a difference." :
+    "See how Aidly is helping your community.";
+
+  // Show donor personal section
+  if (role === "donor") {
+    document.getElementById("donorHighlight").style.display = "block";
+    loadMyStats();
+  }
+
+  // Always load platform stats
+  loadPlatformStats();
+
+  async function loadMyStats() {
+    try {
+      const res = await fetch(`${API_URL}/auth/my-stats`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      const data = await res.json();
+
+      document.getElementById("myTotal").textContent = data.total || 0;
+      document.getElementById("myDelivered").textContent = data.delivered || 0;
+      document.getElementById("myPoints").textContent = data.points || 0;
+
+      if (data.byType?.length) {
+        new Chart(document.getElementById("myDonationsChart"), {
+          type: "doughnut",
+          data: {
+            labels: data.byType.map(t => (t._id || "other").toUpperCase()),
+            datasets: [{
+              data: data.byType.map(t => t.count),
+              backgroundColor: ["#14532d", "#22c55e", "#86efac", "#bbf7d0"],
+              borderWidth: 2, borderColor: "#fff"
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: { legend: { position: "bottom", labels: { font: { family: "Inter", size: 11 } } } }
+          }
+        });
+      }
+    } catch (err) { console.log("My stats error:", err); }
+  }
+
+  async function loadPlatformStats() {
+    try {
+      const res = await fetch(`${API_URL}/auth/stats`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      const data = await res.json();
+
+      document.getElementById("statTotalUsers").textContent = data.totalUsers || 0;
+      document.getElementById("statTotalDonations").textContent = data.totalDonations || 0;
+      document.getElementById("statDelivered").textContent = data.deliveredDonations || 0;
+      document.getElementById("statVolunteers").textContent = data.totalVolunteers || 0;
+
+      document.getElementById("roleDonors").textContent = data.totalDonors || 0;
+      document.getElementById("roleRecipients").textContent = data.totalRecipients || 0;
+      document.getElementById("roleVolunteers").textContent = data.totalVolunteers || 0;
+      document.getElementById("roleAdmins").textContent = (data.totalUsers || 0) - (data.totalDonors || 0) - (data.totalRecipients || 0) - (data.totalVolunteers || 0);
+
+      // Chart: Donations by Type
+      if (data.donationsByType?.length) {
+        new Chart(document.getElementById("chartByType"), {
+          type: "doughnut",
+          data: {
+            labels: data.donationsByType.map(d => (d._id || "other").toUpperCase()),
+            datasets: [{
+              data: data.donationsByType.map(d => d.count),
+              backgroundColor: ["#14532d", "#22c55e", "#86efac"],
+              borderWidth: 2, borderColor: "#fff"
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: { legend: { position: "bottom", labels: { font: { family: "Inter", size: 11 } } } }
+          }
+        });
+      } else {
+        document.getElementById("chartByType").parentElement.innerHTML += '<p style="text-align:center;color:#94a3b8;font-size:13px;">No donation data yet</p>';
+      }
+
+      // Chart: Donations by Status
+      if (data.donationsByStatus?.length) {
+        new Chart(document.getElementById("chartByStatus"), {
+          type: "bar",
+          data: {
+            labels: data.donationsByStatus.map(d => d._id || "unknown"),
+            datasets: [{
+              label: "Count",
+              data: data.donationsByStatus.map(d => d.count),
+              backgroundColor: "#14532d",
+              borderRadius: 8,
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: "#f1f5f9" } },
+              x: { grid: { display: false } }
+            }
+          }
+        });
+      } else {
+        document.getElementById("chartByStatus").parentElement.innerHTML += '<p style="text-align:center;color:#94a3b8;font-size:13px;">No status data yet</p>';
+      }
+
+    } catch (err) { console.log("Platform stats error:", err); }
+  }
+</script>
+
+</body>
+</html>

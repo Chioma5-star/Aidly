@@ -6,6 +6,7 @@
     <title>Admin Dashboard - Aidly</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         .admin-nav {
             background: rgba(255,255,255,0.9);
@@ -136,6 +137,8 @@
         <div class="logo">💚 Aidly Admin</div>
         <div class="nav-right">
             <span id="adminName" style="font-weight:600; color:#64748b; font-size:14px;"></span>
+            <a href="maps.html" style="text-decoration:none; font-size:20px;" title="Donation Centers">📍</a>
+            <a href="impact.html" style="text-decoration:none; font-size:20px;" title="Impact Dashboard">📊</a>
             <button class="btn-danger" onclick="logout()">Logout</button>
         </div>
     </nav>
@@ -147,6 +150,7 @@
         <button class="tab-btn" onclick="switchTab('volunteers', this)">🚚 Volunteers <span id="volCount" style="background:#f59e0b;color:white;border-radius:20px;padding:1px 7px;font-size:11px;margin-left:4px;display:none;">0</span></button>
         <button class="tab-btn" onclick="switchTab('users', this)">👥 All Users</button>
         <button class="tab-btn" onclick="switchTab('donations', this)">📦 All Donations</button>
+        <button class="tab-btn" onclick="switchTab('inventory', this)">🏪 Inventory</button>
     </div>
 
     <!-- OVERVIEW TAB -->
@@ -158,6 +162,45 @@
             <div class="stat-card"><div class="stat-icon">⏳</div><div class="stat-value" id="statPending">-</div><div class="stat-label">Pending Verify</div></div>
             <div class="stat-card"><div class="stat-icon">🚚</div><div class="stat-value" id="statVolunteers">-</div><div class="stat-label">Pending Volunteers</div></div>
         </div>
+
+        <!-- IMPACT CHARTS -->
+        <p class="section-title" style="margin-bottom:16px;">📊 Impact Dashboard</p>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:28px;">
+            <div style="background:white; border:1px solid #e2e8f0; border-radius:16px; padding:20px;">
+                <p style="font-weight:700; font-size:14px; color:#0f172a; margin:0 0 12px;">Donations by Type</p>
+                <canvas id="chartByType" height="200"></canvas>
+            </div>
+            <div style="background:white; border:1px solid #e2e8f0; border-radius:16px; padding:20px;">
+                <p style="font-weight:700; font-size:14px; color:#0f172a; margin:0 0 12px;">Donations by Status</p>
+                <canvas id="chartByStatus" height="200"></canvas>
+            </div>
+            <div style="background:white; border:1px solid #e2e8f0; border-radius:16px; padding:20px;">
+                <p style="font-weight:700; font-size:14px; color:#0f172a; margin:0 0 12px;">Users by Role</p>
+                <canvas id="chartByRole" height="200"></canvas>
+            </div>
+            <div style="background:white; border:1px solid #e2e8f0; border-radius:16px; padding:20px;">
+                <p style="font-weight:700; font-size:14px; color:#0f172a; margin:0 0 8px;">Platform Summary</p>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px;">
+                    <div style="background:#f0fdf4; border-radius:10px; padding:14px; text-align:center;">
+                        <div style="font-size:22px; font-weight:800; color:#166534;" id="impactDonors">-</div>
+                        <div style="font-size:12px; color:#64748b;">Donors</div>
+                    </div>
+                    <div style="background:#dbeafe; border-radius:10px; padding:14px; text-align:center;">
+                        <div style="font-size:22px; font-weight:800; color:#1d4ed8;" id="impactRecipients">-</div>
+                        <div style="font-size:12px; color:#64748b;">Recipients</div>
+                    </div>
+                    <div style="background:#fef3c7; border-radius:10px; padding:14px; text-align:center;">
+                        <div style="font-size:22px; font-weight:800; color:#92400e;" id="impactVolunteers">-</div>
+                        <div style="font-size:12px; color:#64748b;">Volunteers</div>
+                    </div>
+                    <div style="background:#ede9fe; border-radius:10px; padding:14px; text-align:center;">
+                        <div style="font-size:22px; font-weight:800; color:#6d28d9;" id="impactDelivered">-</div>
+                        <div style="font-size:12px; color:#64748b;">Delivered</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <p class="section-title">Recent Donations</p>
         <div id="recentDonations"><p class="empty-state">Loading...</p></div>
     </div>
@@ -180,6 +223,22 @@
         <p class="section-title">👥 All Users</p>
         <input class="search-bar" type="text" id="userSearch" placeholder="🔍 Search by name or email..." oninput="filterUsers()">
         <div id="usersTable"><p class="empty-state">Loading...</p></div>
+    </div>
+
+    <!-- INVENTORY TAB -->
+    <div id="tab-inventory" class="tab-content">
+        <p class="section-title">🏪 Inventory Management</p>
+        <p style="color:#64748b; font-size:14px; margin-bottom:20px;">Track donated physical items, quantities, expiry dates and stock levels.</p>
+
+        <!-- Inventory Stats -->
+        <div class="stats-grid" style="margin-bottom:24px;">
+            <div class="stat-card"><div class="stat-icon">📦</div><div class="stat-value" id="invTotal">-</div><div class="stat-label">Total Items</div></div>
+            <div class="stat-card"><div class="stat-icon">⚠️</div><div class="stat-value" id="invLowStock" style="color:#f59e0b;">-</div><div class="stat-label">Low Stock</div></div>
+            <div class="stat-card"><div class="stat-icon">🗓️</div><div class="stat-value" id="invExpiringSoon" style="color:#f59e0b;">-</div><div class="stat-label">Expiring Soon</div></div>
+            <div class="stat-card"><div class="stat-icon">❌</div><div class="stat-value" id="invExpired" style="color:#ef4444;">-</div><div class="stat-label">Expired</div></div>
+        </div>
+
+        <div id="inventoryTable"><p class="empty-state">Loading inventory...</p></div>
     </div>
 
     <!-- DONATIONS TAB -->
@@ -216,8 +275,195 @@
 
         function token() { return localStorage.getItem("aidlyToken"); }
 
+        
+        // ── IMPACT STATS & CHARTS ─────────────────────────────
+        async function loadImpactStats() {
+            try {
+                const res = await fetch(`${API_URL}/auth/stats`, {
+                    headers: { "Authorization": `Bearer ${token()}` }
+                });
+                const data = await res.json();
+
+                // Update summary cards
+                const donors = document.getElementById("impactDonors");
+                const recipients = document.getElementById("impactRecipients");
+                const volunteers = document.getElementById("impactVolunteers");
+                const delivered = document.getElementById("impactDelivered");
+                if (donors) donors.textContent = data.totalDonors || 0;
+                if (recipients) recipients.textContent = data.totalRecipients || 0;
+                if (volunteers) volunteers.textContent = data.totalVolunteers || 0;
+                if (delivered) delivered.textContent = data.deliveredDonations || 0;
+
+                // Chart: Donations by Type
+                const ctxType = document.getElementById("chartByType");
+                if (ctxType && data.donationsByType?.length) {
+                    new Chart(ctxType, {
+                        type: "doughnut",
+                        data: {
+                            labels: data.donationsByType.map(d => (d._id || "other").toUpperCase()),
+                            datasets: [{ data: data.donationsByType.map(d => d.count), backgroundColor: ["#22c55e","#3b82f6","#f59e0b"], borderWidth: 2, borderColor: "#fff" }]
+                        },
+                        options: { responsive: true, plugins: { legend: { position: "bottom" } } }
+                    });
+                }
+
+                // Chart: Donations by Status
+                const ctxStatus = document.getElementById("chartByStatus");
+                if (ctxStatus && data.donationsByStatus?.length) {
+                    new Chart(ctxStatus, {
+                        type: "bar",
+                        data: {
+                            labels: data.donationsByStatus.map(d => d._id || "unknown"),
+                            datasets: [{ label: "Count", data: data.donationsByStatus.map(d => d.count), backgroundColor: "#22c55e", borderRadius: 6 }]
+                        },
+                        options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+                    });
+                }
+
+                // Chart: Users by Role
+                const ctxRole = document.getElementById("chartByRole");
+                const roleData = [
+                    { role: "Donor", count: data.totalDonors || 0 },
+                    { role: "Recipient", count: data.totalRecipients || 0 },
+                    { role: "Volunteer", count: data.totalVolunteers || 0 },
+                ];
+                if (ctxRole) {
+                    new Chart(ctxRole, {
+                        type: "pie",
+                        data: {
+                            labels: roleData.map(r => r.role),
+                            datasets: [{ data: roleData.map(r => r.count), backgroundColor: ["#3b82f6","#22c55e","#f59e0b"], borderWidth: 2, borderColor: "#fff" }]
+                        },
+                        options: { responsive: true, plugins: { legend: { position: "bottom" } } }
+                    });
+                }
+            } catch (err) {
+                console.log("Could not load impact stats:", err.message);
+            }
+        }
+
+        // ── INVENTORY ─────────────────────────────────────────
+        async function loadInventory() {
+            try {
+                // Load stats
+                const statsRes = await fetch(`${API_URL}/donations/inventory-stats`, {
+                    headers: { "Authorization": `Bearer ${token()}` }
+                });
+                const stats = await statsRes.json();
+                document.getElementById("invTotal").textContent = stats.total || 0;
+                document.getElementById("invLowStock").textContent = stats.lowStock || 0;
+                document.getElementById("invExpiringSoon").textContent = stats.expiringSoon || 0;
+                document.getElementById("invExpired").textContent = stats.expired || 0;
+
+                // Load inventory items
+                const res = await fetch(`${API_URL}/donations/inventory`, {
+                    headers: { "Authorization": `Bearer ${token()}` }
+                });
+                const items = await res.json();
+                renderInventory(items);
+            } catch (err) {
+                document.getElementById("inventoryTable").innerHTML = "<p class='empty-state' style='color:red;'>Error loading inventory.</p>";
+            }
+        }
+
+        function renderInventory(items) {
+            const container = document.getElementById("inventoryTable");
+            if (!items.length) {
+                container.innerHTML = "<p class='empty-state'>No physical donations in inventory yet.</p>";
+                return;
+            }
+
+            container.innerHTML = `
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>Description</th>
+                            <th>Donor</th>
+                            <th>Qty</th>
+                            <th>Size</th>
+                            <th>Expiry</th>
+                            <th>Status</th>
+                            <th>Alerts</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${items.map(item => `
+                            <tr id="inv-row-${item._id}">
+                                <td><strong>${(item.type || "").toUpperCase()}</strong></td>
+                                <td style="color:#64748b;">${item.description || "—"}</td>
+                                <td>${item.user?.name || "Unknown"}</td>
+                                <td>
+                                    <input type="number" min="0" value="${item.quantity || 1}"
+                                        style="width:60px; padding:4px 6px; border-radius:6px; border:1px solid #e2e8f0; font-size:13px;"
+                                        onchange="updateInvField('${item._id}', 'quantity', this.value)">
+                                </td>
+                                <td>
+                                    ${item.type === 'clothes' ? `
+                                        <select onchange="updateInvField('${item._id}', 'size', this.value)"
+                                            style="padding:4px 6px; border-radius:6px; border:1px solid #e2e8f0; font-size:12px;">
+                                            ${["", "XS","S","M","L","XL","XXL","Mixed"].map(s =>
+                                                `<option value="${s}" ${item.size === s ? "selected" : ""}>${s || "—"}</option>`
+                                            ).join("")}
+                                        </select>
+                                    ` : "—"}
+                                </td>
+                                <td>
+                                    ${item.type === 'food' ? `
+                                        <input type="date" value="${item.expiryDate ? item.expiryDate.split('T')[0] : ''}"
+                                            style="padding:4px 6px; border-radius:6px; border:1px solid #e2e8f0; font-size:12px;"
+                                            onchange="updateInvField('${item._id}', 'expiryDate', this.value)">
+                                    ` : "—"}
+                                </td>
+                                <td><span class="status-badge status-${(item.status||'').toLowerCase()}">${item.status || "—"}</span></td>
+                                <td>
+                                    ${item.isExpired ? '<span style="background:#fef2f2;color:#ef4444;padding:3px 8px;border-radius:20px;font-size:11px;font-weight:700;">❌ Expired</span>' : ''}
+                                    ${item.isExpiringSoon ? '<span style="background:#fef3c7;color:#92400e;padding:3px 8px;border-radius:20px;font-size:11px;font-weight:700;">⚠️ Expiring Soon</span>' : ''}
+                                    ${item.isLowStock ? '<span style="background:#fef3c7;color:#92400e;padding:3px 8px;border-radius:20px;font-size:11px;font-weight:700;">📉 Low Stock</span>' : ''}
+                                    ${!item.isExpired && !item.isExpiringSoon && !item.isLowStock ? '<span style="color:#22c55e;font-size:12px;">✅ OK</span>' : ''}
+                                </td>
+                                <td>
+                                    <button onclick="saveInvItem('${item._id}')"
+                                        style="background:#22c55e;color:white;border:none;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:700;width:auto;">
+                                        Save
+                                    </button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>`;
+        }
+
+        // Store pending changes per item
+        const invChanges = {};
+        function updateInvField(id, field, value) {
+            if (!invChanges[id]) invChanges[id] = {};
+            invChanges[id][field] = value;
+        }
+
+        async function saveInvItem(id) {
+            if (!invChanges[id]) return alert("No changes to save!");
+            try {
+                const res = await fetch(`${API_URL}/donations/inventory/${id}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token()}` },
+                    body: JSON.stringify(invChanges[id])
+                });
+                if (res.ok) {
+                    delete invChanges[id];
+                    alert("✅ Inventory updated!");
+                    loadInventory();
+                } else {
+                    const d = await res.json();
+                    alert(d.message || "Failed to update.");
+                }
+            } catch { alert("Connection error."); }
+        }
+
+
         async function loadAll() {
-            await Promise.all([loadPendingUsers(), loadPendingVolunteers(), loadUsers(), loadDonations()]);
+            await Promise.all([loadPendingUsers(), loadPendingVolunteers(), loadUsers(), loadDonations(), loadImpactStats(), loadInventory()]);
         }
 
         // ── PENDING RECIPIENT VERIFICATIONS ───────────────────

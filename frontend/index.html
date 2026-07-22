@@ -11,8 +11,8 @@
 
   <header class="header">
     <div class="logo">
-  <img src="images/Aidly logo.png" alt="Aidly" style="height: 85px; width: auto;">
-</div>
+      <img src="images/Aidly logo.png" alt="Aidly" style="height: 98px; width: auto;">
+    </div>
     <div class="nav-auth">
       <button class="btn-login-outline" onclick="goToLogin()">Login</button>
       <button class="btn-get-started" onclick="goToRegister()">Get Started</button>
@@ -30,15 +30,15 @@
 
   <section class="stats-bar">
     <div class="stat-item">
-      <h2 id="totalMeals">10</h2>
+      <h2 id="totalMeals">—</h2>
       <p>Items Donated</p>
     </div>
     <div class="stat-item">
-      <h2 id="totalFamilies">1</h2>
+      <h2 id="totalFamilies">—</h2>
       <p>People Helped</p>
     </div>
     <div class="stat-item">
-      <h2 id="totalVolunteers">0</h2>
+      <h2 id="totalVolunteers">—</h2>
       <p>Active Volunteers</p>
     </div>
   </section>
@@ -77,18 +77,53 @@
         <h3>💚 Aidly</h3>
         <p>Connecting help to those who need it.</p>
       </div>
-
       <div class="footer-contact">
         <h4>Contact</h4>
         <p>support@aidly.org</p>
       </div>
     </div>
-
     <div class="footer-bottom">
       <p>&copy; 2026 Aidly. All rights reserved.</p>
     </div>
   </footer>
 
   <script src="js/script.js"></script>
+  <script>
+    // Animate number counting up
+    function animateCount(el, target, duration = 1200) {
+      const start = 0;
+      const step = target / (duration / 16);
+      let current = start;
+      const timer = setInterval(() => {
+        current += step;
+        if (current >= target) {
+          el.textContent = target;
+          clearInterval(timer);
+        } else {
+          el.textContent = Math.floor(current);
+        }
+      }, 16);
+    }
+
+    // Fetch real stats from backend
+    async function loadStats() {
+      try {
+        const res = await fetch("http://127.0.0.1:5000/api/auth/public-stats");
+        if (!res.ok) throw new Error("Failed");
+        const data = await res.json();
+
+        animateCount(document.getElementById("totalMeals"), data.itemsDonated || 0);
+        animateCount(document.getElementById("totalFamilies"), data.peopleHelped || 0);
+        animateCount(document.getElementById("totalVolunteers"), data.activeVolunteers || 0);
+      } catch (err) {
+        // Fallback to static numbers if backend is offline
+        document.getElementById("totalMeals").textContent = "—";
+        document.getElementById("totalFamilies").textContent = "—";
+        document.getElementById("totalVolunteers").textContent = "—";
+      }
+    }
+
+    loadStats();
+  </script>
 </body>
 </html>
