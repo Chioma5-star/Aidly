@@ -1,24 +1,50 @@
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
-// models/User.js
+
 const userSchema = new mongoose.Schema({
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    role: { type: String, enum: ["Admin", "Donor","Volunteer", "Recipient"], default: "Donor" },
+    role: { type: String, enum: ["Admin", "Donor", "Volunteer", "Recipient"], default: "Donor" },
     isVerified: { type: Boolean, default: false },
+    points: { type: Number, default: 0 },
+
+    // Volunteer fields
+    phone: { type: String, default: "" },
+    area: { type: String, default: "" },
+
+    // Recipient verification
     idCardPath: { type: String },
-    points: { type: Number, default: 0 }
+    proofOfNeedPath: { type: String },
+
+    // Needs assessment
+    dependents: { type: Number, default: 0 },
+    specificNeed: {
+        type: String,
+        enum: ["Food", "Clothing", "Financial", "Medical", "Other", ""],
+        default: ""
+    },
+    situation: { type: String, default: "" },
+    incomeRange: {
+        type: String,
+        enum: ["No income", "Below ₵500", "₵500-₵1000", "Above ₵1000", ""],
+        default: ""
+    },
+
+    // Password reset
+    resetPasswordToken: { type: String },
+    resetPasswordExpires: { type: Date },
+
 }, { timestamps: true });
 
-
-userSchema.pre("save", async function(next) {
-  if (!this.isModified("password")) next();
-  this.password = await bcrypt.hash(this.password, 10);
+// Single pre-save hook — no next() needed with async
+userSchema.pre("save", async function() {
+    if (!this.isModified("password")) return;
+    this.password = await bcrypt.hash(this.password, 10);
 });
 
 userSchema.methods.matchPassword = async function(enteredPassword) {
-  return await bcrypt.compare(enteredPassword, this.password);
+    return await bcrypt.compare(enteredPassword, this.password);
 };
 
 export default mongoose.model("User", userSchema);

@@ -12,9 +12,13 @@ import {
     getAvailableTasks, 
     acceptTask, 
     getMyTasks, 
-    volunteerMarkDelivered
+    volunteerMarkDelivered,
+    getInventory,
+    updateInventoryItem,
+    getInventoryStats
 } from "../controllers/donationController.js"; 
 import { protect } from "../middleware/authMiddleware.js";
+import { upload } from "../middleware/uploadMiddleware.js";
 
 const router = express.Router();
 
@@ -39,8 +43,13 @@ router.get("/my-tasks", protect, getMyTasks);
 router.put("/accept-task/:id", protect, acceptTask);
 router.put("/volunteer-delivered/:id", protect, volunteerMarkDelivered);
 
+// --- INVENTORY ROUTES ---
+router.get("/inventory", protect, getInventory);
+router.get("/inventory-stats", protect, getInventoryStats);
+router.put("/inventory/:id", protect, updateInventoryItem);
+
 // --- GENERAL ROUTES (MUST BE LAST) ---
 router.get("/", protect, getAllDonations);
-router.post("/", protect, createDonation);
+router.post("/", upload.single("donationImage"), protect, createDonation); // image upload
 
 export default router;

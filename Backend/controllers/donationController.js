@@ -1,8 +1,8 @@
 import Donation from "../models/Donation.js";
 import User from "../models/User.js";
 import Notification from "../models/Notification.js";
+import { sendPaymentConfirmationEmail } from "../services/emailService.js";
 
-// Helper: Create a notification
 async function createNotification(userId, message, type) {
     try {
         await Notification.create({ user: userId, message, type });
@@ -11,16 +11,15 @@ async function createNotification(userId, message, type) {
     }
 }
 
-// 1. Create Donation
+// 1. Create Donation (with optional image + email confirmation for money)
 export const createDonation = async (req, res) => {
     try {
         const { type, amount, description, transactionReference } = req.body;
+        const imagePath = req.file ? `/uploads/${req.file.filename}` : "";
+
         const donation = new Donation({
             user: req.user._id,
-            type,
-            amount,
-            description,
-            transactionReference,
+            type, amount, description, transactionReference, imagePath,
             status: type === 'money' ? 'Completed' : 'available'
         });
 
@@ -28,6 +27,14 @@ export const createDonation = async (req, res) => {
 
         if (type === 'money') {
             await User.findByIdAndUpdate(req.user._id, { $inc: { points: 10 } });
+
+            // Send payment confirmation email
+            try {
+                const user = await User.findById(req.user._id);
+                await sendPaymentConfirmationEmail(user.email, user.name, amount, transactionReference || "N/A");
+            } catch (emailErr) {
+                console.error("Payment email error:", emailErr.message);
+            }
         }
 
         res.status(201).json(donation);
@@ -50,17 +57,16 @@ export const getMyDonations = async (req, res) => {
 // 3. Browse all available physical donations
 export const getAllDonations = async (req, res) => {
     try {
-        const donations = await Donation.find({ 
-            type: { $ne: 'money' },
-            status: 'available'
-        }).sort({ createdAt: -1 });
+        const donations = await Donation.find({
+            type: { $ne: 'money' }, status: 'available'
+        }).populate("user", "name").sort({ createdAt: -1 });
         res.status(200).json(donations);
     } catch (error) {
         res.status(500).json({ message: "Failed to load donations." });
     }
 };
 
-// 4. Recipient: Request an item — notifies donor
+// 4. Recipient: Request an item
 export const requestItem = async (req, res) => {
     try {
         const donation = await Donation.findById(req.params.id);
@@ -75,7 +81,6 @@ export const requestItem = async (req, res) => {
         donation.status = "Requested";
         await donation.save();
 
-        // Notify the donor that someone requested their item
         await createNotification(
             donation.user,
             `📦 Someone has requested your ${donation.type} donation: "${donation.description || donation.type}".`,
@@ -84,7 +89,6 @@ export const requestItem = async (req, res) => {
 
         res.status(200).json({ message: "Item requested successfully!", donation });
     } catch (error) {
-        console.error("Request Item Error:", error);
         res.status(500).json({ message: "Server error: " + error.message });
     }
 };
@@ -92,18 +96,17 @@ export const requestItem = async (req, res) => {
 // 5. Donor: See incoming requests
 export const getDonorRequests = async (req, res) => {
     try {
-        const requests = await Donation.find({ 
-            user: req.user._id, 
+        const requests = await Donation.find({
+            user: req.user._id,
             status: { $in: ["Requested", "Approved"] }
         }).populate("recipientId", "name email");
-        
         res.json(requests);
     } catch (error) {
         res.status(500).json({ message: "Error fetching requests" });
     }
 };
 
-// 6. Donor: Approve a request — notifies recipient
+// 6. Donor: Approve a request
 export const approveRequest = async (req, res) => {
     try {
         const donation = await Donation.findById(req.params.id);
@@ -116,11 +119,10 @@ export const approveRequest = async (req, res) => {
         donation.status = "Approved";
         await donation.save();
 
-        // Notify the recipient that their request was approved
         if (donation.recipientId) {
             await createNotification(
                 donation.recipientId,
-                `✅ Your request for "${donation.description || donation.type}" has been approved! The donor will be in touch soon.`,
+                `✅ Your request for "${donation.description || donation.type}" has been approved!`,
                 "Item Approved"
             );
         }
@@ -137,14 +139,13 @@ export const getMyRequests = async (req, res) => {
         const requests = await Donation.find({ recipientId: req.user._id })
             .populate("user", "name email")
             .sort({ updatedAt: -1 });
-
         res.json(requests);
     } catch (error) {
         res.status(500).json({ message: "Error fetching your requests" });
     }
 };
 
-// 8. Recipient: Confirm receipt — notifies donor
+// 8. Recipient: Confirm receipt
 export const markAsReceived = async (req, res) => {
     try {
         const donation = await Donation.findById(req.params.id);
@@ -161,13 +162,11 @@ export const markAsReceived = async (req, res) => {
         donation.status = "Delivered";
         await donation.save();
 
-        // Award 50 points to the donor
         await User.findByIdAndUpdate(donation.user, { $inc: { points: 50 } });
 
-        // Notify the donor that their item was delivered
         await createNotification(
             donation.user,
-            `🎉 Your ${donation.type} donation has been received and delivered! You've earned 50 points.`,
+            `🎉 Your ${donation.type} donation has been received! You've earned 50 points.`,
             "Item Delivered"
         );
 
@@ -177,6 +176,7 @@ export const markAsReceived = async (req, res) => {
     }
 };
 
+// 9. Admin: Get all donations
 export const getAllDonationsAdmin = async (req, res) => {
     try {
         const donations = await Donation.find()
@@ -188,33 +188,33 @@ export const getAllDonationsAdmin = async (req, res) => {
     }
 };
 
-// Volunteer: Get available tasks (Approved donations with no volunteer)
+// 10. Volunteer: Get available tasks
 export const getAvailableTasks = async (req, res) => {
     try {
         const tasks = await Donation.find({
-            status: "Approved",
-            volunteerId: null,
-            type: { $ne: 'money' }
+            status: "Approved", volunteerId: null, type: { $ne: 'money' }
         })
         .populate("user", "name email")
         .populate("recipientId", "name email")
         .sort({ updatedAt: -1 });
-
         res.json(tasks);
     } catch (error) {
         res.status(500).json({ message: "Failed to fetch tasks" });
     }
 };
 
-// Volunteer: Accept a task
+// 11. Volunteer: Accept a task
 export const acceptTask = async (req, res) => {
     try {
-        console.log("=== ACCEPT TASK ===");
-        console.log("Task ID:", req.params.id);
-        console.log("Volunteer ID:", req.user._id);
-        
         const donation = await Donation.findById(req.params.id);
-        console.log("Donation found:", donation);
+        if (!donation) return res.status(404).json({ message: "Donation not found" });
+
+        if (donation.status !== "Approved") {
+            return res.status(400).json({ message: "Task is no longer available" });
+        }
+        if (donation.volunteerId) {
+            return res.status(400).json({ message: "Task already taken by another volunteer" });
+        }
 
         donation.volunteerId = req.user._id;
         donation.status = "Delivering";
@@ -226,21 +226,20 @@ export const acceptTask = async (req, res) => {
     }
 };
 
-// Volunteer: Get their own accepted tasks
+// 12. Volunteer: Get their own tasks
 export const getMyTasks = async (req, res) => {
     try {
         const tasks = await Donation.find({ volunteerId: req.user._id })
             .populate("user", "name email")
             .populate("recipientId", "name email")
             .sort({ updatedAt: -1 });
-
         res.json(tasks);
     } catch (error) {
         res.status(500).json({ message: "Failed to fetch your tasks" });
     }
 };
 
-// Volunteer: Mark as delivered
+// 13. Volunteer: Mark as delivered
 export const volunteerMarkDelivered = async (req, res) => {
     try {
         const donation = await Donation.findById(req.params.id);
@@ -253,17 +252,14 @@ export const volunteerMarkDelivered = async (req, res) => {
         donation.status = "Delivered";
         await donation.save();
 
-        // Award points to donor
         await User.findByIdAndUpdate(donation.user, { $inc: { points: 50 } });
 
-        // Notify donor
         await Notification.create({
             user: donation.user,
             message: `🎉 Your ${donation.type} donation has been delivered by a volunteer!`,
             type: "Item Delivered"
         });
 
-        // Notify recipient
         if (donation.recipientId) {
             await Notification.create({
                 user: donation.recipientId,
@@ -278,3 +274,68 @@ export const volunteerMarkDelivered = async (req, res) => {
     }
 };
 
+// ─── INVENTORY ────────────────────────────────────────────────────────────────
+
+// Admin: Get inventory (all physical donations with quantity info)
+export const getInventory = async (req, res) => {
+    try {
+        const items = await Donation.find({ type: { $ne: "money" } })
+            .populate("user", "name email")
+            .sort({ createdAt: -1 });
+
+        // Flag low stock and expired items
+        const now = new Date();
+        const inventory = items.map(item => {
+            const obj = item.toObject();
+            obj.isLowStock = item.quantity <= item.lowStockThreshold;
+            obj.isExpired = item.expiryDate && item.expiryDate < now;
+            obj.isExpiringSoon = item.expiryDate &&
+                item.expiryDate > now &&
+                (item.expiryDate - now) < 3 * 24 * 60 * 60 * 1000; // 3 days
+            return obj;
+        });
+
+        res.json(inventory);
+    } catch (error) {
+        res.status(500).json({ message: "Failed to fetch inventory" });
+    }
+};
+
+// Admin: Update inventory item (quantity, expiry, size)
+export const updateInventoryItem = async (req, res) => {
+    try {
+        const { quantity, expiryDate, size, lowStockThreshold } = req.body;
+        const donation = await Donation.findByIdAndUpdate(
+            req.params.id,
+            { quantity, expiryDate, size, lowStockThreshold },
+            { new: true }
+        );
+        if (!donation) return res.status(404).json({ message: "Item not found" });
+        res.json({ message: "Inventory updated!", donation });
+    } catch (error) {
+        res.status(500).json({ message: "Failed to update inventory" });
+    }
+};
+
+// Admin: Get inventory summary stats
+export const getInventoryStats = async (req, res) => {
+    try {
+        const now = new Date();
+        const threeDays = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+
+        const [total, lowStock, expired, expiringSoon, byType] = await Promise.all([
+            Donation.countDocuments({ type: { $ne: "money" }, status: "available" }),
+            Donation.countDocuments({ type: { $ne: "money" }, $expr: { $lte: ["$quantity", "$lowStockThreshold"] } }),
+            Donation.countDocuments({ type: { $ne: "money" }, expiryDate: { $lt: now } }),
+            Donation.countDocuments({ type: { $ne: "money" }, expiryDate: { $gte: now, $lte: threeDays } }),
+            Donation.aggregate([
+                { $match: { type: { $ne: "money" }, status: "available" } },
+                { $group: { _id: "$type", count: { $sum: 1 }, totalQty: { $sum: "$quantity" } } }
+            ])
+        ]);
+
+        res.json({ total, lowStock, expired, expiringSoon, byType });
+    } catch (error) {
+        res.status(500).json({ message: "Failed to fetch inventory stats" });
+    }
+};

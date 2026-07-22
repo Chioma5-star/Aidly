@@ -11,21 +11,34 @@ import {
     getAllUsers,
     getPendingVolunteers,
     updateVolunteerProfile,
-    getMe
+    getMe,
+    forgotPassword,
+    resetPassword,
+    getStats,
+    getMyStats,
+    getPublicStats
 } from "../controllers/authController.js";
 
 import { protect } from "../middleware/authMiddleware.js";
 import { upload } from "../middleware/uploadMiddleware.js";
 
+// Public routes
 router.post("/register", registerUser);
 router.post("/login", loginUser);
 router.get("/leaderboard", getLeaderboard);
+router.post("/forgot-password", forgotPassword);
+router.post("/reset-password", resetPassword);
+router.get("/public-stats", getPublicStats);
+
+// Protected routes
+router.get("/me", protect, getMe);
 router.get("/all-users", protect, getAllUsers);
 router.get("/pending-volunteers", protect, getPendingVolunteers);
+router.get("/stats", protect, getStats);
+router.get("/my-stats", protect, getMyStats);
 router.put("/volunteer-profile", protect, updateVolunteerProfile);
-router.get("/me", protect, getMe);
 
-// Upload ID + Proof of Need — multer handles both files, then auth, then controller
+// Upload ID + Proof of Need
 router.post(
     "/verify-id",
     upload.fields([
