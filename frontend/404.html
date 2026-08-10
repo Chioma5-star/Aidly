@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Page Not Found - Aidly</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+    body { background: #f8fafc; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
+    .card {
+      background: white; border-radius: 24px; padding: 48px 40px;
+      text-align: center; max-width: 460px; width: 100%;
+      border: 1px solid #e2e8f0; box-shadow: 0 10px 40px rgba(0,0,0,0.06);
+    }
+    .logo { font-size: 28px; font-weight: 800; color: #14532d; margin-bottom: 32px; }
+    .error-code { font-size: 80px; font-weight: 800; color: #e2e8f0; line-height: 1; margin-bottom: 8px; }
+    h1 { font-size: 22px; font-weight: 700; color: #0f172a; margin-bottom: 10px; }
+    p { font-size: 14px; color: #64748b; line-height: 1.6; margin-bottom: 28px; }
+    .btn-home {
+      display: inline-block; background: #14532d; color: white;
+      padding: 13px 28px; border-radius: 12px; font-weight: 700;
+      font-size: 15px; text-decoration: none; margin-right: 10px;
+    }
+    .btn-home:hover { background: #166534; }
+    .btn-back {
+      display: inline-block; background: #f1f5f9; color: #475569;
+      padding: 13px 28px; border-radius: 12px; font-weight: 600;
+      font-size: 15px; text-decoration: none; border: 1px solid #e2e8f0;
+    }
+    .btns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">💚 Aidly</div>
+    <div class="error-code">404</div>
+    <h1>Page Not Found</h1>
+    <p>The page you're looking for doesn't exist or may have been moved. Let's get you back on track!</p>
+    <div class="btns">
+      <a href="index.html" class="btn-home">🏠 Go Home</a>
+      <a href="javascript:history.back()" class="btn-back">← Go Back</a>
+    </div>
+  </div>
+</body>
+</html>

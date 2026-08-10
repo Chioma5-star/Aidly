@@ -146,7 +146,8 @@
 </div>
 
 <script>
-  const API_URL = "http://127.0.0.1:5000/api";
+  // API_URL is set globally by config.js
+const API_URL = window.API_URL || "http://127.0.0.1:5000/api";
   const token = localStorage.getItem("aidlyToken");
   const user = JSON.parse(localStorage.getItem("aidlyUser") || "{}");
 
@@ -269,4 +270,4 @@
 </script>
 
 </body>
-</html>
+</html>s

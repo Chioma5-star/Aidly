@@ -9,26 +9,47 @@
   <style>
     .password-rules {
       background: #f8fafc; border: 1px solid #e2e8f0;
-      border-radius: 10px; padding: 12px 16px; margin-top: -12px;
+      border-radius: 10px; padding: 12px 16px; margin-top: -10px;
       margin-bottom: 16px; font-size: 13px;
     }
-    .rule {
-      display: flex; align-items: center; gap: 8px;
-      padding: 3px 0; color: #94a3b8; transition: color 0.2s;
-    }
+    .rule { display: flex; align-items: center; gap: 8px; padding: 3px 0; color: #94a3b8; transition: color 0.2s; }
     .rule.pass { color: #22c55e; }
     .rule.fail { color: #ef4444; }
     .rule-icon { font-size: 14px; width: 16px; text-align: center; }
-    .strength-bar {
-      height: 6px; border-radius: 6px; background: #e2e8f0;
-      margin-bottom: 6px; overflow: hidden;
-    }
-    .strength-fill {
-      height: 100%; border-radius: 6px;
-      transition: width 0.3s, background 0.3s;
-      width: 0%;
-    }
+    .strength-bar { height: 6px; border-radius: 6px; background: #e2e8f0; margin-bottom: 6px; overflow: hidden; }
+    .strength-fill { height: 100%; border-radius: 6px; transition: width 0.3s, background 0.3s; width: 0%; }
     .strength-label { font-size: 12px; font-weight: 600; margin-bottom: 10px; }
+
+    .role-cards { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+    .role-card {
+      display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px;
+      border: 2px solid #e2e8f0; border-radius: 14px; cursor: pointer;
+      transition: 0.2s; background: #f8fafc;
+    }
+    .role-card:hover { border-color: #22c55e; background: #f0fdf4; }
+    .role-card.selected { border-color: #14532d; background: #f0fdf4; }
+    .role-card input[type="radio"] { margin-top: 2px; accent-color: #14532d; }
+    .role-card-icon { font-size: 24px; flex-shrink: 0; }
+    .role-card-text h4 { font-size: 14px; font-weight: 700; color: #0f172a; margin-bottom: 2px; }
+    .role-card-text p { font-size: 12px; color: #64748b; line-height: 1.4; }
+
+    /* Volunteer extra fields */
+    .volunteer-fields {
+      background: #fffbeb; border: 1px solid #fbbf24; border-radius: 12px;
+      padding: 16px; margin-bottom: 16px; display: none;
+    }
+    .volunteer-fields.show { display: block; }
+    .volunteer-fields h4 { font-size: 13px; font-weight: 700; color: #92400e; margin-bottom: 12px; }
+    .vol-field-label { font-size: 13px; font-weight: 600; color: #1e293b; display: block; margin-bottom: 5px; }
+
+    /* Success screen */
+    .success-screen {
+      display: none; text-align: center; padding: 20px 0;
+    }
+    .success-screen .success-icon { font-size: 64px; margin-bottom: 16px; }
+    .success-screen h2 { font-size: 24px; font-weight: 800; color: #14532d; margin-bottom: 8px; }
+    .success-screen p { color: #64748b; font-size: 14px; margin-bottom: 24px; line-height: 1.6; }
+    .countdown { font-size: 13px; color: #94a3b8; margin-top: 12px; }
   </style>
 </head>
 <body>
@@ -41,61 +62,108 @@
   </header>
 
   <main class="container">
-    <div class="donation-box">
-      <h2>Create an Account</h2>
-      <p>Join our community today to start connecting help to those who need it most.</p>
+    <div class="donation-box" style="max-width: 520px; margin: 0 auto;">
 
-      <form id="registerForm">
-        <label for="regName">Full Name</label>
-        <input type="text" id="regName" placeholder="Enter your full name" required />
+      <!-- REGISTRATION FORM -->
+      <div id="registerFormSection">
+        <h2 style="margin-bottom: 4px;">Create an Account</h2>
+        <p style="color:#64748b; font-size:14px; margin-bottom:24px;">Join our community and start making a difference.</p>
 
-        <label for="regEmail">Email Address</label>
-        <input type="email" id="regEmail" placeholder="name@email.com" required />
+        <form id="registerForm">
+          <label style="font-weight:600; font-size:13px; color:#475569; display:block; margin-bottom:5px;">Full Name</label>
+          <input type="text" id="regName" placeholder="Enter your full name" required />
 
-        <label for="regPassword">Password</label>
-        <input type="password" id="regPassword" placeholder="Create a strong password" required oninput="checkPassword(this.value)" />
+          <label style="font-weight:600; font-size:13px; color:#475569; display:block; margin-bottom:5px;">Email Address</label>
+          <input type="email" id="regEmail" placeholder="name@email.com" required />
 
-        <!-- Strength bar -->
-        <div class="strength-bar"><div class="strength-fill" id="strengthFill"></div></div>
-        <div class="strength-label" id="strengthLabel" style="color:#94a3b8;">Enter a password</div>
+          <label style="font-weight:600; font-size:13px; color:#475569; display:block; margin-bottom:5px;">Password</label>
+          <input type="password" id="regPassword" placeholder="Create a strong password" required oninput="checkPassword(this.value)" />
 
-        <!-- Rules -->
-        <div class="password-rules">
-          <div class="rule" id="rule-length"><span class="rule-icon">○</span> At least 8 characters</div>
-          <div class="rule" id="rule-upper"><span class="rule-icon">○</span> At least one uppercase letter (A-Z)</div>
-          <div class="rule" id="rule-number"><span class="rule-icon">○</span> At least one number (0-9)</div>
-          <div class="rule" id="rule-special"><span class="rule-icon">○</span> At least one special character (!@#$%)</div>
+          <div class="strength-bar"><div class="strength-fill" id="strengthFill"></div></div>
+          <div class="strength-label" id="strengthLabel" style="color:#94a3b8;">Enter a password</div>
+
+          <div class="password-rules">
+            <div class="rule" id="rule-length"><span class="rule-icon">○</span> At least 8 characters</div>
+            <div class="rule" id="rule-upper"><span class="rule-icon">○</span> At least one uppercase letter</div>
+            <div class="rule" id="rule-number"><span class="rule-icon">○</span> At least one number</div>
+            <div class="rule" id="rule-special"><span class="rule-icon">○</span> At least one special character</div>
+          </div>
+
+          <label style="font-weight:600; font-size:13px; color:#475569; display:block; margin-bottom:5px;">Confirm Password</label>
+          <input type="password" id="regConfirm" placeholder="Re-enter your password" required />
+          <p id="matchMsg" style="font-size:13px; margin-top:-12px; margin-bottom:14px; display:none;"></p>
+
+          <label style="font-weight:600; font-size:13px; color:#475569; display:block; margin-bottom:10px;">I want to join as:</label>
+          <div class="role-cards">
+            <label class="role-card selected" onclick="selectRole(this, 'Donor')">
+              <input type="radio" name="role" value="Donor" checked>
+              <div class="role-card-icon">🎁</div>
+              <div class="role-card-text">
+                <h4>Donor</h4>
+                <p>I want to donate food, clothes, or money to help those in need.</p>
+              </div>
+            </label>
+            <label class="role-card" onclick="selectRole(this, 'Recipient')">
+              <input type="radio" name="role" value="Recipient">
+              <div class="role-card-icon">🤲</div>
+              <div class="role-card-text">
+                <h4>Recipient</h4>
+                <p>I need assistance. I will verify my identity to access available aid.</p>
+              </div>
+            </label>
+            <label class="role-card" onclick="selectRole(this, 'Volunteer')">
+              <input type="radio" name="role" value="Volunteer">
+              <div class="role-card-icon">🚚</div>
+              <div class="role-card-text">
+                <h4>Volunteer</h4>
+                <p>I want to help deliver donations to recipients in my area.</p>
+              </div>
+            </label>
+        
+          </div>
+
+          <button type="submit" id="registerBtn" style="width:100%; margin-top:8px;">Create Account</button>
+        </form>
+
+        <div style="margin-top: 20px; text-align: center;">
+          <p style="color: #64748b; font-size: 14px;">
+            Already have an account? <a href="login.html" style="color:#14532d; font-weight:600;">Login here</a>
+          </p>
         </div>
-
-        <label for="regConfirm">Confirm Password</label>
-        <input type="password" id="regConfirm" placeholder="Re-enter your password" required />
-        <p id="matchMsg" style="font-size:13px; margin-top:-14px; margin-bottom:14px; display:none;"></p>
-
-        <label>I want to join as:</label>
-        <div style="margin-bottom: 20px; display: flex; flex-direction: column; gap: 10px; padding: 15px; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
-          <label style="font-weight: 500; display: flex; align-items: center; gap: 10px; margin: 0; cursor: pointer;">
-            <input type="radio" name="role" value="Donor" checked style="width: auto; margin: 0;"> 🎁 Donor — I want to donate
-          </label>
-          <label style="font-weight: 500; display: flex; align-items: center; gap: 10px; margin: 0; cursor: pointer;">
-            <input type="radio" name="role" value="Recipient" style="width: auto; margin: 0;"> 🤲 Recipient — I need aid
-          </label>
-          <label style="font-weight: 500; display: flex; align-items: center; gap: 10px; margin: 0; cursor: pointer;">
-            <input type="radio" name="role" value="Volunteer" style="width: auto; margin: 0;"> 🚚 Volunteer — I want to deliver
-          </label>
-        </div>
-
-        <button type="submit" id="registerBtn">Create Account</button>
-      </form>
-
-      <div style="margin-top: 25px; text-align: center;">
-        <p style="color: #64748b; font-size: 14px;">
-          Already have an account? <a href="login.html">Login here</a>
-        </p>
       </div>
+
+      <!-- SUCCESS SCREEN -->
+      <div class="success-screen" id="successScreen">
+        <div class="success-icon">🎉</div>
+        <h2>Account Created!</h2>
+        <p id="successMessage">Your account has been created successfully. Welcome to Aidly!</p>
+        <button onclick="window.location.href='login.html'" style="width:100%;">
+          Login to Your Account →
+        </button>
+        <p class="countdown" id="countdown">Redirecting in 5 seconds...</p>
+      </div>
+
     </div>
   </main>
 
+  <script src="./js/config.js"></script>
   <script>
+    
+    function selectRole(card, role) {
+  
+  document.querySelectorAll(".role-card").forEach(c => {
+    c.classList.remove("selected");
+  });
+
+  
+  card.classList.add("selected");
+
+  
+  const radio = card.querySelector('input[type="radio"]');
+  if (radio) radio.checked = true;
+}
+
+    // Password strength checker
     function checkPassword(val) {
       const rules = {
         length:  val.length >= 8,
@@ -103,20 +171,13 @@
         number:  /[0-9]/.test(val),
         special: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(val),
       };
-
-      // Update rule indicators
       Object.entries(rules).forEach(([key, pass]) => {
         const el = document.getElementById(`rule-${key}`);
         if (!el) return;
         el.className = "rule " + (pass ? "pass" : (val.length > 0 ? "fail" : ""));
         el.querySelector(".rule-icon").textContent = pass ? "✅" : (val.length > 0 ? "❌" : "○");
       });
-
-      // Calculate strength
       const score = Object.values(rules).filter(Boolean).length;
-      const fill = document.getElementById("strengthFill");
-      const label = document.getElementById("strengthLabel");
-
       const levels = [
         { w: "0%",   bg: "#e2e8f0", text: "Enter a password",  color: "#94a3b8" },
         { w: "25%",  bg: "#ef4444", text: "Weak",              color: "#ef4444" },
@@ -124,15 +185,14 @@
         { w: "75%",  bg: "#3b82f6", text: "Good",              color: "#3b82f6" },
         { w: "100%", bg: "#22c55e", text: "Strong ✅",         color: "#22c55e" },
       ];
-
       const level = val.length === 0 ? levels[0] : levels[score];
-      fill.style.width = level.w;
-      fill.style.background = level.bg;
-      label.textContent = level.text;
-      label.style.color = level.color;
+      document.getElementById("strengthFill").style.cssText = `width:${level.w}; background:${level.bg};`;
+      const lbl = document.getElementById("strengthLabel");
+      lbl.textContent = level.text;
+      lbl.style.color = level.color;
     }
 
-    // Confirm password match check
+    // Confirm password match
     document.getElementById("regConfirm").addEventListener("input", function() {
       const pw = document.getElementById("regPassword").value;
       const msg = document.getElementById("matchMsg");
@@ -145,8 +205,84 @@
         msg.style.color = "#ef4444";
       }
     });
-  </script>
 
-  <script src="./js/script.js"></script>
+    // Show success screen with countdown
+    function showSuccess(role) {
+      document.getElementById("registerFormSection").style.display = "none";
+      const screen = document.getElementById("successScreen");
+      screen.style.display = "block";
+
+      const messages = {
+        Donor: "Your donor account is ready! You can now login and start donating food, clothes, or money.",
+        Recipient: "Your account is created! Login and submit your verification documents to start requesting aid.",
+        Volunteer: "Your volunteer account is ready! Login to complete your profile and start accepting delivery tasks."
+      };
+      document.getElementById("successMessage").textContent = messages[role] || "Welcome to Aidly!";
+
+      let secs = 5;
+      const timer = setInterval(() => {
+        secs--;
+        document.getElementById("countdown").textContent = `Redirecting in ${secs} seconds...`;
+        if (secs <= 0) {
+          clearInterval(timer);
+          window.location.href = "login.html";
+        }
+      }, 1000);
+    }
+
+    // Register form submission
+    document.getElementById("registerForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const name = document.getElementById("regName").value.trim();
+      const email = document.getElementById("regEmail").value.trim();
+      const password = document.getElementById("regPassword").value;
+      const confirm = document.getElementById("regConfirm").value;
+      const rawRole = document.querySelector('input[name="role"]:checked').value;
+      const role = rawRole.charAt(0).toUpperCase() + rawRole.slice(1);
+
+      // Validation
+      if (password.length < 8) return alert("Password must be at least 8 characters!");
+      if (!/[A-Z]/.test(password)) return alert("Password must contain at least one uppercase letter!");
+      if (!/[0-9]/.test(password)) return alert("Password must contain at least one number!");
+      if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) return alert("Password must contain at least one special character!");
+      if (password !== confirm) return alert("Passwords do not match!");
+
+      const btn = document.getElementById("registerBtn");
+      btn.textContent = "Creating account...";
+      btn.disabled = true;
+
+     try {
+  const body = {
+    name,
+    email,
+    password,
+    role
+  };
+
+  const res = await fetch(`${window.API_URL}/auth/register`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(body)
+  });
+
+  if (res.ok) {
+    showSuccess(role);
+  } else {
+    const data = await res.json();
+    alert(data.message || "Registration failed");
+    btn.textContent = "Create Account";
+    btn.disabled = false;
+  }
+} catch (err) {
+  console.error(err);
+  alert("Registration failed. Is your backend running?");
+  btn.textContent = "Create Account";
+  btn.disabled = false;
+}
+    });
+  </script>
 </body>
 </html>

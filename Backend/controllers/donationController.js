@@ -15,7 +15,7 @@ async function createNotification(userId, message, type) {
 export const createDonation = async (req, res) => {
     try {
         const { type, amount, description, transactionReference } = req.body;
-        const imagePath = req.file ? `/uploads/${req.file.filename}` : "";
+        const imagePath = req.file ? (req.file.path || req.file.secure_url || `/uploads/${req.file.filename}`) : "";
 
         const donation = new Donation({
             user: req.user._id,
@@ -54,13 +54,34 @@ export const getMyDonations = async (req, res) => {
     }
 };
 
-// 3. Browse all available physical donations
+// 3. Browse all available physical donations (with pagination)
 export const getAllDonations = async (req, res) => {
     try {
-        const donations = await Donation.find({
-            type: { $ne: 'money' }, status: 'available'
-        }).populate("user", "name").sort({ createdAt: -1 });
-        res.status(200).json(donations);
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 12;
+        const type = req.query.type || null;
+        const search = req.query.search || null;
+
+        const filter = { type: { $ne: "money" }, status: "available" };
+        if (type && type !== "all") filter.type = type;
+        if (search) filter.description = { $regex: search, $options: "i" };
+
+        const total = await Donation.countDocuments(filter);
+        const donations = await Donation.find(filter)
+            .populate("user", "name")
+            .sort({ createdAt: -1 })
+            .skip((page - 1) * limit)
+            .limit(limit);
+
+        res.status(200).json({
+            donations,
+            pagination: {
+                total,
+                page,
+                pages: Math.ceil(total / limit),
+                limit
+            }
+        });
     } catch (error) {
         res.status(500).json({ message: "Failed to load donations." });
     }

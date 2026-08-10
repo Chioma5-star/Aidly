@@ -149,7 +149,8 @@
     </div>
 
     <script>
-        const API_URL = "http://127.0.0.1:5000/api";
+        // API_URL is set globally by config.js
+const API_URL = window.API_URL || "http://127.0.0.1:5000/api";
 
         function timeAgo(dateStr) {
             const diff = Math.floor((Date.now() - new Date(dateStr)) / 1000);

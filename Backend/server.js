@@ -6,7 +6,7 @@ import fs from "fs";
 import { fileURLToPath } from "url";
 import connectDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
-import donationRoutes from "./routes/donationRoutes.js";
+import donationRoutes from "./routes/DonationRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 import locationRoutes from "./routes/locationRoutes.js";
 
@@ -33,7 +33,8 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+// Images now served via Cloudinary — no local static folder needed
+// app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/donations", donationRoutes);

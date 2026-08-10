@@ -12,6 +12,12 @@ const userSchema = new mongoose.Schema({
     // Volunteer fields
     phone: { type: String, default: "" },
     area: { type: String, default: "" },
+    vehicle: { type: String, default: "" },
+    availability: { type: String, default: "" },
+    experience: { type: String, default: "" },
+    motivation: { type: String, default: "" },
+    emergencyContact: { type: String, default: "" },
+    idNumber: { type: String, default: "" },
 
     // Recipient verification
     idCardPath: { type: String },

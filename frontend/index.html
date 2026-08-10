@@ -13,7 +13,10 @@
     <div class="logo">
       <img src="images/Aidly logo.png" alt="Aidly" style="height: 98px; width: auto;">
     </div>
-    <div class="nav-auth">
+    <button class="hamburger" onclick="toggleNav()" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="nav-auth" id="mainNav">
       <button class="btn-login-outline" onclick="goToLogin()">Login</button>
       <button class="btn-get-started" onclick="goToRegister()">Get Started</button>
     </div>
@@ -88,6 +91,12 @@
   </footer>
 
   <script src="js/script.js"></script>
+  <script>
+    function toggleNav() {
+      const nav = document.getElementById("mainNav");
+      nav.classList.toggle("open");
+    }
+  </script>
   <script>
     // Animate number counting up
     function animateCount(el, target, duration = 1200) {

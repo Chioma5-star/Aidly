@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Profile - Aidly</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    body { background: #f8fafc; font-family: 'Inter', sans-serif; }
+
+    .profile-nav {
+      background: white; padding: 14px 5%; display: flex;
+      justify-content: space-between; align-items: center;
+      border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; z-index: 100;
+    }
+    .profile-nav .logo { font-size: 22px; font-weight: 800; color: #14532d; }
+    .profile-nav .nav-right { display: flex; gap: 10px; align-items: center; }
+    .btn-back { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; padding: 9px 16px; border-radius: 10px; font-weight: 600; font-size: 13px; cursor: pointer; text-decoration: none; }
+    .btn-logout { background: #fef2f2; color: #ef4444; border: 1px solid #fecaca; padding: 9px 16px; border-radius: 10px; font-weight: 600; font-size: 13px; cursor: pointer; }
+
+    .wrapper { max-width: 680px; margin: 0 auto; padding: 28px 4%; }
+
+    .card { background: white; border-radius: 18px; border: 1px solid #e2e8f0; padding: 24px; margin-bottom: 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+
+    /* Avatar */
+    .avatar-row { display: flex; align-items: center; gap: 18px; }
+    .avatar { width: 72px; height: 72px; border-radius: 50%; background: linear-gradient(135deg, #14532d, #22c55e); display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 800; color: white; flex-shrink: 0; }
+    .avatar-info h2 { font-size: 20px; font-weight: 800; color: #0f172a; margin-bottom: 3px; }
+    .avatar-info p { font-size: 13px; color: #64748b; margin-bottom: 5px; }
+    .role-pill { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 700; }
+    .pill-donor { background: #dbeafe; color: #1d4ed8; }
+    .pill-recipient { background: #dcfce7; color: #166534; }
+    .pill-volunteer { background: #fef3c7; color: #92400e; }
+    .pill-admin { background: #ede9fe; color: #6d28d9; }
+
+    /* Stats */
+    .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .stat-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; text-align: center; }
+    .stat-box .val { font-size: 24px; font-weight: 800; color: #0f172a; }
+    .stat-box .lbl { font-size: 12px; color: #64748b; margin-top: 2px; }
+
+    /* Form fields */
+    .card h3 { font-size: 15px; font-weight: 700; color: #0f172a; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #f1f5f9; }
+    .field-label { font-size: 13px; font-weight: 600; color: #475569; display: block; margin-bottom: 5px; }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .field-readonly { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 12px; font-size: 14px; color: #94a3b8; margin-bottom: 14px; }
+    .btn-save { background: #14532d; color: white; border: none; padding: 12px 24px; border-radius: 10px; font-weight: 700; font-size: 14px; cursor: pointer; margin-top: 4px; }
+    .btn-save:hover { background: #166534; }
+
+    /* Password toggle */
+    .toggle-link { background: none; border: none; color: #14532d; font-weight: 600; font-size: 13px; cursor: pointer; text-decoration: underline; padding: 0; }
+    .pwd-fields { display: none; margin-top: 14px; }
+    .pwd-fields.open { display: block; }
+
+    /* Account info */
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .info-item .info-label { font-size: 12px; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-bottom: 4px; }
+    .info-item .info-val { font-size: 14px; color: #1e293b; font-weight: 500; }
+
+    @media (max-width: 480px) {
+      .avatar-row { flex-direction: column; text-align: center; }
+      .stats-row { grid-template-columns: repeat(3, 1fr); }
+      .field-row { grid-template-columns: 1fr; }
+      .info-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="profile-nav">
+  <div class="logo">💚 Aidly</div>
+  <div class="nav-right">
+    <a id="backBtn" href="dashboard.html" class="btn-back">← Dashboard</a>
+    <button class="btn-logout" onclick="logout()">Logout</button>
+  </div>
+</nav>
+
+<div class="wrapper">
+
+  <!-- Loading state -->
+  <div id="loadingState" style="text-align:center; padding:60px 20px; color:#94a3b8;">
+    <div style="font-size:36px; margin-bottom:12px;">⏳</div>
+    <p>Loading your profile...</p>
+  </div>
+
+  <!-- Profile content (hidden until loaded) -->
+  <div id="profileContent" style="display:none;">
+
+    <!-- Avatar card -->
+    <div class="card">
+      <div class="avatar-row">
+        <div class="avatar" id="avatarEl">?</div>
+        <div class="avatar-info">
+          <h2 id="profileName">—</h2>
+          <p id="profileEmail">—</p>
+          <span class="role-pill" id="rolePill">—</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Donor stats -->
+    <div class="card" id="statsCard" style="display:none;">
+      <h3>📊 My Impact</h3>
+      <div class="stats-row">
+        <div class="stat-box"><div class="val" id="statTotal">—</div><div class="lbl">Donations</div></div>
+        <div class="stat-box"><div class="val" id="statDelivered">—</div><div class="lbl">Delivered</div></div>
+        <div class="stat-box"><div class="val" id="statPoints">—</div><div class="lbl">Points</div></div>
+      </div>
+    </div>
+
+    <!-- Edit profile -->
+    <div class="card">
+      <h3>✏️ Edit Profile</h3>
+
+      <div class="field-row">
+        <div>
+          <label class="field-label">Full Name</label>
+          <input type="text" id="editName" style="width:100%; margin-bottom:14px;">
+        </div>
+        <div>
+          <label class="field-label">Email Address</label>
+          <div class="field-readonly" id="editEmail">—</div>
+        </div>
+      </div>
+
+      <!-- Volunteer extra fields -->
+      <div id="volunteerFields" style="display:none;">
+        <div class="field-row">
+          <div>
+            <label class="field-label">Phone Number</label>
+            <input type="text" id="editPhone" placeholder="e.g. 0241234567" style="margin-bottom:14px;">
+          </div>
+          <div>
+            <label class="field-label">Delivery Area</label>
+            <input type="text" id="editArea" placeholder="e.g. Tantra Hills" style="margin-bottom:14px;">
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-save" onclick="saveProfile()">Save Changes</button>
+    </div>
+
+    <!-- Change password -->
+    <div class="card">
+      <h3>🔐 Security</h3>
+      <p style="font-size:13px; color:#64748b; margin-bottom:10px;">
+        Want to change your password?
+        <button class="toggle-link" onclick="togglePwd()">Click here</button>
+      </p>
+      <div class="pwd-fields" id="pwdFields">
+        <label class="field-label">Current Password</label>
+        <input type="password" id="currentPwd" placeholder="Current password">
+        <label class="field-label">New Password</label>
+        <input type="password" id="newPwd" placeholder="New password (min 8 chars)">
+        <label class="field-label">Confirm New Password</label>
+        <input type="password" id="confirmPwd" placeholder="Confirm new password">
+        <button class="btn-save" onclick="changePassword()">Update Password</button>
+      </div>
+    </div>
+
+    <!-- Account info -->
+    <div class="card">
+      <h3>ℹ️ Account Info</h3>
+      <div class="info-grid">
+        <div class="info-item">
+          <div class="info-label">Member Since</div>
+          <div class="info-val" id="memberSince">—</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Account Status</div>
+          <div class="info-val" id="accountStatus">—</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Role</div>
+          <div class="info-val" id="accountRole">—</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">User ID</div>
+          <div class="info-val" id="accountId" style="font-size:11px; color:#94a3b8; word-break:break-all;">—</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="js/config.js"></script>
+<script>
+  const API_URL = window.API_URL || "http://127.0.0.1:5000/api";
+  const token = localStorage.getItem("aidlyToken");
+
+  function logout() { localStorage.clear(); window.location.href = "login.html"; }
+
+  // Simple guard — just check token exists
+  if (!token) {
+    window.location.href = "login.html";
+  }
+
+  const rolePillClass = { donor: "pill-donor", recipient: "pill-recipient", volunteer: "pill-volunteer", admin: "pill-admin" };
+  const roleEmoji = { donor: "🎁", recipient: "🤲", volunteer: "🚚", admin: "🛡️" };
+
+  async function loadProfile() {
+    try {
+      const res = await fetch(`${API_URL}/auth/me`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+
+      if (!res.ok) {
+        // Token invalid — go to login
+        localStorage.clear();
+        window.location.href = "login.html";
+        return;
+      }
+
+      const user = await res.json();
+      const role = (user.role || "").toLowerCase();
+
+      // Update back button based on role
+      const backBtn = document.getElementById("backBtn");
+      if (role === "admin") backBtn.href = "admin.html";
+      else if (role === "volunteer") backBtn.href = "volunteer_dashboard.html";
+      else backBtn.href = "dashboard.html";
+
+      // Fill in profile
+      document.getElementById("avatarEl").textContent = user.name?.charAt(0).toUpperCase() || "?";
+      document.getElementById("profileName").textContent = user.name || "—";
+      document.getElementById("profileEmail").textContent = user.email || "—";
+      document.getElementById("editEmail").textContent = user.email || "—";
+      document.getElementById("editName").value = user.name || "";
+
+      // Role pill
+      const pill = document.getElementById("rolePill");
+      pill.textContent = `${roleEmoji[role] || ""} ${user.role}`;
+      pill.className = `role-pill ${rolePillClass[role] || ""}`;
+
+      // Account info
+      document.getElementById("memberSince").textContent = new Date(user.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+      document.getElementById("accountStatus").innerHTML = user.isVerified
+        ? '<span style="color:#22c55e; font-weight:700;">✅ Verified</span>'
+        : '<span style="color:#f59e0b; font-weight:700;">⏳ Pending</span>';
+      document.getElementById("accountRole").textContent = user.role;
+      document.getElementById("accountId").textContent = user._id || "—";
+
+      // Volunteer extra fields
+      if (role === "volunteer") {
+        document.getElementById("volunteerFields").style.display = "block";
+        document.getElementById("editPhone").value = user.phone || "";
+        document.getElementById("editArea").value = user.area || "";
+      }
+
+      // Donor stats
+      if (role === "donor") {
+        document.getElementById("statsCard").style.display = "block";
+        loadStats();
+      }
+
+      // Show content, hide loading
+      document.getElementById("loadingState").style.display = "none";
+      document.getElementById("profileContent").style.display = "block";
+
+    } catch (err) {
+      console.error("Profile error:", err);
+      document.getElementById("loadingState").innerHTML = `
+        <div style="font-size:36px; margin-bottom:12px;">⚠️</div>
+        <p style="color:#ef4444;">Could not load profile. Is your backend running?</p>
+        <button onclick="loadProfile()" style="margin-top:12px; background:#14532d; color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-weight:600;">Try Again</button>
+      `;
+    }
+  }
+
+  async function loadStats() {
+    try {
+      const res = await fetch(`${API_URL}/auth/my-stats`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      const data = await res.json();
+      document.getElementById("statTotal").textContent = data.total || 0;
+      document.getElementById("statDelivered").textContent = data.delivered || 0;
+      document.getElementById("statPoints").textContent = data.points || 0;
+    } catch {}
+  }
+
+  async function saveProfile() {
+    const name = document.getElementById("editName").value.trim();
+    if (!name) return alert("Name cannot be empty!");
+
+    const body = { name };
+    const localUser = JSON.parse(localStorage.getItem("aidlyUser") || "{}");
+    const role = (localUser.role || "").toLowerCase();
+
+    if (role === "volunteer") {
+      body.phone = document.getElementById("editPhone").value.trim();
+      body.area = document.getElementById("editArea").value.trim();
+    }
+
+    try {
+      const res = await fetch(`${API_URL}/auth/update-profile`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+        body: JSON.stringify(body)
+      });
+
+      if (res.ok) {
+        // Update localStorage
+        const updatedUser = { ...localUser, ...body };
+        localStorage.setItem("aidlyUser", JSON.stringify(updatedUser));
+        // Update UI
+        document.getElementById("profileName").textContent = name;
+        document.getElementById("avatarEl").textContent = name.charAt(0).toUpperCase();
+        alert("✅ Profile updated successfully!");
+      } else {
+        const d = await res.json();
+        alert(d.message || "Failed to update profile.");
+      }
+    } catch { alert("Connection error."); }
+  }
+
+  function togglePwd() {
+    document.getElementById("pwdFields").classList.toggle("open");
+  }
+
+  async function changePassword() {
+    const current = document.getElementById("currentPwd").value;
+    const newPwd = document.getElementById("newPwd").value;
+    const confirm = document.getElementById("confirmPwd").value;
+
+    if (!current || !newPwd || !confirm) return alert("Please fill in all password fields!");
+    if (newPwd.length < 8) return alert("New password must be at least 8 characters!");
+    if (!/[A-Z]/.test(newPwd)) return alert("Password must contain an uppercase letter!");
+    if (!/[0-9]/.test(newPwd)) return alert("Password must contain a number!");
+    if (newPwd !== confirm) return alert("Passwords do not match!");
+
+    try {
+      const res = await fetch(`${API_URL}/auth/change-password`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+        body: JSON.stringify({ currentPassword: current, newPassword: newPwd })
+      });
+
+      if (res.ok) {
+        alert("✅ Password changed successfully!");
+        document.getElementById("currentPwd").value = "";
+        document.getElementById("newPwd").value = "";
+        document.getElementById("confirmPwd").value = "";
+        document.getElementById("pwdFields").classList.remove("open");
+      } else {
+        const d = await res.json();
+        alert(d.message || "Failed to change password.");
+      }
+    } catch { alert("Connection error."); }
+  }
+
+  // Load on page ready
+  loadProfile();
+</script>
+</body>
+</html>

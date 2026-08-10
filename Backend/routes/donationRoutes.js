@@ -18,7 +18,7 @@ import {
     getInventoryStats
 } from "../controllers/donationController.js"; 
 import { protect } from "../middleware/authMiddleware.js";
-import { upload } from "../middleware/uploadMiddleware.js";
+import { upload, uploadDonationImage } from "../middleware/uploadMiddleware.js";
 
 const router = express.Router();
 
@@ -50,6 +50,9 @@ router.put("/inventory/:id", protect, updateInventoryItem);
 
 // --- GENERAL ROUTES (MUST BE LAST) ---
 router.get("/", protect, getAllDonations);
-router.post("/", upload.single("donationImage"), protect, createDonation); // image upload
+// Money donations — JSON body
+router.post("/money", protect, createDonation);
+// Physical donations — FormData with optional image
+router.post("/", uploadDonationImage.single("donationImage"), protect, createDonation);
 
 export default router;

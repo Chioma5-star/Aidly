@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Volunteer Application - Aidly</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    body { background: #f8fafc; }
+    .app-header {
+      background: white; padding: 14px 5%; display: flex;
+      justify-content: space-between; align-items: center;
+      border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; z-index: 100;
+    }
+    .app-header .logo { font-size: 22px; font-weight: 800; color: #14532d; }
+    .btn-logout-sm { background: #fef2f2; color: #ef4444; border: 1px solid #fecaca; padding: 8px 14px; border-radius: 10px; font-weight: 600; font-size: 13px; cursor: pointer; }
+
+    .app-wrapper { max-width: 660px; margin: 0 auto; padding: 28px 4%; }
+
+    /* Progress */
+    .progress-bar { display: flex; align-items: flex-start; margin-bottom: 28px; gap: 0; }
+    .progress-step { flex: 1; display: flex; flex-direction: column; align-items: center; position: relative; }
+    .progress-step::after { content: ""; position: absolute; top: 15px; left: 50%; width: 100%; height: 2px; background: #e2e8f0; z-index: 0; }
+    .progress-step:last-child::after { display: none; }
+    .step-circle { width: 30px; height: 30px; border-radius: 50%; background: #e2e8f0; color: #94a3b8; font-weight: 700; font-size: 12px; display: flex; align-items: center; justify-content: center; z-index: 1; position: relative; transition: 0.3s; }
+    .step-circle.active { background: #14532d; color: white; }
+    .step-circle.done { background: #22c55e; color: white; }
+    .step-label { font-size: 10px; color: #94a3b8; margin-top: 5px; font-weight: 600; text-align: center; }
+    .step-label.active { color: #14532d; }
+
+    /* Sections */
+    .form-section { background: white; border-radius: 18px; padding: 24px; border: 1px solid #e2e8f0; display: none; box-shadow: 0 2px 10px rgba(0,0,0,0.04); }
+    .form-section.active { display: block; }
+
+    .sec-header { display: flex; align-items: center; gap: 12px; margin-bottom: 22px; padding-bottom: 16px; border-bottom: 1px solid #f1f5f9; }
+    .sec-icon { font-size: 26px; }
+    .sec-header h2 { font-size: 17px; font-weight: 700; color: #0f172a; margin-bottom: 2px; }
+    .sec-header p { font-size: 13px; color: #64748b; }
+
+    .field-label { font-size: 13px; font-weight: 600; color: #475569; display: block; margin-bottom: 5px; }
+    .required { color: #ef4444; }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    /* Day checkboxes */
+    .days-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 16px; }
+    .day-chip { padding: 8px 4px; border: 2px solid #e2e8f0; border-radius: 10px; text-align: center; cursor: pointer; font-size: 12px; font-weight: 600; color: #64748b; transition: 0.15s; background: white; }
+    .day-chip:hover { border-color: #22c55e; color: #14532d; }
+    .day-chip.selected { border-color: #14532d; background: #f0fdf4; color: #14532d; }
+    .day-chip input { display: none; }
+
+    /* Vehicle options */
+    .vehicle-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
+    .vehicle-card { padding: 12px 8px; border: 2px solid #e2e8f0; border-radius: 12px; text-align: center; cursor: pointer; transition: 0.15s; background: white; }
+    .vehicle-card:hover { border-color: #22c55e; background: #f0fdf4; }
+    .vehicle-card.selected { border-color: #14532d; background: #f0fdf4; }
+    .vehicle-card input { display: none; }
+    .vehicle-card .v-icon { font-size: 24px; display: block; margin-bottom: 4px; }
+    .vehicle-card .v-label { font-size: 12px; font-weight: 600; color: #475569; }
+
+    /* Skill checkboxes */
+    .skills-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+    .skill-item { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 10px; cursor: pointer; transition: 0.15s; background: #f8fafc; }
+    .skill-item:hover { border-color: #22c55e; background: #f0fdf4; }
+    .skill-item.selected { border-color: #14532d; background: #f0fdf4; }
+    .skill-item input { display: none; }
+    .skill-item label { font-size: 13px; color: #1e293b; cursor: pointer; font-weight: 500; }
+
+    /* Declaration */
+    .declaration-box { background: #f8fafc; border-radius: 12px; padding: 18px; margin-bottom: 18px; border: 1px solid #e2e8f0; }
+    .declaration-box p { font-size: 13px; color: #475569; line-height: 1.7; margin-bottom: 6px; }
+    .agree-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid #f1f5f9; }
+    .agree-item:last-child { border-bottom: none; }
+    .agree-item input[type="checkbox"] { width: auto; margin: 0; margin-top: 2px; accent-color: #14532d; flex-shrink: 0; }
+    .agree-item label { font-size: 13px; color: #475569; cursor: pointer; line-height: 1.5; }
+
+    /* Nav buttons */
+    .form-nav { display: flex; gap: 10px; margin-top: 22px; }
+    .btn-prev { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; padding: 12px 20px; border-radius: 10px; font-weight: 600; font-size: 14px; cursor: pointer; }
+    .btn-next { background: #14532d; color: white; border: none; padding: 12px 24px; border-radius: 10px; font-weight: 700; font-size: 14px; cursor: pointer; flex: 1; }
+    .btn-submit { background: #22c55e; color: white; border: none; padding: 13px 24px; border-radius: 10px; font-weight: 700; font-size: 15px; cursor: pointer; flex: 1; }
+
+    /* Success */
+    .success-screen { display: none; background: white; border-radius: 18px; padding: 40px 24px; text-align: center; border: 1px solid #e2e8f0; box-shadow: 0 2px 10px rgba(0,0,0,0.04); }
+    .success-screen .big-icon { font-size: 64px; margin-bottom: 14px; }
+    .success-screen h2 { font-size: 22px; font-weight: 800; color: #14532d; margin-bottom: 8px; }
+    .success-screen p { color: #64748b; font-size: 14px; line-height: 1.6; margin-bottom: 20px; }
+    .next-steps { background: #f0fdf4; border-radius: 12px; padding: 16px; text-align: left; margin-bottom: 24px; }
+    .next-steps p { font-size: 13px; color: #166534; margin-bottom: 5px; }
+
+    @media (max-width: 480px) {
+      .field-row { grid-template-columns: 1fr; }
+      .days-grid { grid-template-columns: repeat(4, 1fr); }
+      .vehicle-grid { grid-template-columns: repeat(3, 1fr); }
+      .skills-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="logo">💚 Aidly</div>
+  <button class="btn-logout-sm" onclick="logout()">Logout</button>
+</header>
+
+<div class="app-wrapper">
+
+  <div style="margin-bottom:24px;">
+    <h1 style="font-size:22px; font-weight:800; color:#0f172a; margin-bottom:4px;">Volunteer Application 🚚</h1>
+    <p style="font-size:13px; color:#64748b;">Complete the form below. Admin will review and approve within 24-48 hours.</p>
+  </div>
+
+  <!-- Progress Bar -->
+  <div class="progress-bar">
+    <div class="progress-step"><div class="step-circle active" id="c1">1</div><div class="step-label active" id="l1">Personal</div></div>
+    <div class="progress-step"><div class="step-circle" id="c2">2</div><div class="step-label" id="l2">Availability</div></div>
+    <div class="progress-step"><div class="step-circle" id="c3">3</div><div class="step-label" id="l3">Experience</div></div>
+    <div class="progress-step"><div class="step-circle" id="c4">4</div><div class="step-label" id="l4">Declaration</div></div>
+  </div>
+
+  <!-- STEP 1: Personal -->
+  <div class="form-section active" id="step-1">
+    <div class="sec-header"><div class="sec-icon">👤</div><div><h2>Personal Information</h2><p>How can we reach you?</p></div></div>
+
+    <div class="field-row">
+      <div>
+        <label class="field-label">Phone Number <span class="required">*</span></label>
+        <input type="tel" id="phone" placeholder="e.g. 0241234567">
+      </div>
+      <div>
+        <label class="field-label">WhatsApp Number</label>
+        <input type="tel" id="whatsapp" placeholder="If different from phone">
+      </div>
+    </div>
+
+    <label class="field-label">Your Area / Neighbourhood <span class="required">*</span></label>
+    <input type="text" id="area" placeholder="e.g. Tantra Hills, Accra">
+
+    <label class="field-label">How far can you deliver? <span class="required">*</span></label>
+    <select id="radius">
+      <option value="">Select delivery radius</option>
+      <option value="Within 2km">Within 2km</option>
+      <option value="Up to 5km">Up to 5km</option>
+      <option value="Up to 10km">Up to 10km</option>
+      <option value="Up to 20km">Up to 20km</option>
+      <option value="Anywhere in Accra">Anywhere in Accra</option>
+    </select>
+
+    <label class="field-label">Emergency Contact Name <span class="required">*</span></label>
+    <input type="text" id="emergencyName" placeholder="e.g. Ama Mensah">
+
+    <div class="field-row">
+      <div>
+        <label class="field-label">Emergency Contact Phone <span class="required">*</span></label>
+        <input type="tel" id="emergencyPhone" placeholder="e.g. 0201234567">
+      </div>
+      <div>
+        <label class="field-label">Relationship</label>
+        <select id="emergencyRelation">
+          <option value="">Select</option>
+          <option>Parent</option><option>Sibling</option>
+          <option>Spouse</option><option>Friend</option><option>Other</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-nav">
+      <button class="btn-next" onclick="nextStep(1)">Next: Availability →</button>
+    </div>
+  </div>
+
+  <!-- STEP 2: Availability -->
+  <div class="form-section" id="step-2">
+    <div class="sec-header"><div class="sec-icon">🗓️</div><div><h2>Availability & Transport</h2><p>When can you help and how will you get there?</p></div></div>
+
+    <label class="field-label">Available days <span class="required">*</span></label>
+    <div class="days-grid">
+      <div class="day-chip" onclick="toggleDay(this, 'Monday')"><input type="checkbox" value="Monday">Mon</div>
+      <div class="day-chip" onclick="toggleDay(this, 'Tuesday')"><input type="checkbox" value="Tuesday">Tue</div>
+      <div class="day-chip" onclick="toggleDay(this, 'Wednesday')"><input type="checkbox" value="Wednesday">Wed</div>
+      <div class="day-chip" onclick="toggleDay(this, 'Thursday')"><input type="checkbox" value="Thursday">Thu</div>
+      <div class="day-chip" onclick="toggleDay(this, 'Friday')"><input type="checkbox" value="Friday">Fri</div>
+      <div class="day-chip" onclick="toggleDay(this, 'Saturday')"><input type="checkbox" value="Saturday">Sat</div>
+      <div class="day-chip" onclick="toggleDay(this, 'Sunday')"><input type="checkbox" value="Sunday">Sun</div>
+    </div>
+
+    <label class="field-label">Preferred time of day <span class="required">*</span></label>
+    <select id="timeOfDay">
+      <option value="">Select time</option>
+      <option value="Morning (6AM-12PM)">🌅 Morning (6AM-12PM)</option>
+      <option value="Afternoon (12PM-6PM)">☀️ Afternoon (12PM-6PM)</option>
+      <option value="Evening (6PM-9PM)">🌙 Evening (6PM-9PM)</option>
+      <option value="Flexible">🔄 Flexible (any time)</option>
+    </select>
+
+    <label class="field-label">Hours per week <span class="required">*</span></label>
+    <select id="hoursPerWeek">
+      <option value="">Select hours</option>
+      <option value="1-3 hours">1-3 hours</option>
+      <option value="3-6 hours">3-6 hours</option>
+      <option value="6-10 hours">6-10 hours</option>
+      <option value="10+ hours">10+ hours</option>
+    </select>
+
+    <label class="field-label">Mode of transport <span class="required">*</span></label>
+    <div class="vehicle-grid">
+      <div class="vehicle-card" onclick="selectVehicle(this, 'On foot')"><input type="radio" name="vehicle"><span class="v-icon">🚶</span><span class="v-label">On foot</span></div>
+      <div class="vehicle-card" onclick="selectVehicle(this, 'Bicycle')"><input type="radio" name="vehicle"><span class="v-icon">🚲</span><span class="v-label">Bicycle</span></div>
+      <div class="vehicle-card" onclick="selectVehicle(this, 'Motorbike')"><input type="radio" name="vehicle"><span class="v-icon">🏍️</span><span class="v-label">Motorbike</span></div>
+      <div class="vehicle-card" onclick="selectVehicle(this, 'Car')"><input type="radio" name="vehicle"><span class="v-icon">🚗</span><span class="v-label">Car</span></div>
+      <div class="vehicle-card" onclick="selectVehicle(this, 'Van/Truck')"><input type="radio" name="vehicle"><span class="v-icon">🚚</span><span class="v-label">Van/Truck</span></div>
+      <div class="vehicle-card" onclick="selectVehicle(this, 'Public transport')"><input type="radio" name="vehicle"><span class="v-icon">🚌</span><span class="v-label">Public transport</span></div>
+    </div>
+
+    <div class="form-nav">
+      <button class="btn-prev" onclick="prevStep(2)">← Back</button>
+      <button class="btn-next" onclick="nextStep(2)">Next: Experience →</button>
+    </div>
+  </div>
+
+  <!-- STEP 3: Experience -->
+  <div class="form-section" id="step-3">
+    <div class="sec-header"><div class="sec-icon">⭐</div><div><h2>Experience & Skills</h2><p>Tell us about your background</p></div></div>
+
+    <label class="field-label">Have you volunteered before?</label>
+    <select id="priorExp">
+      <option value="No, first time">No, this is my first time</option>
+      <option value="Yes, occasionally">Yes, occasionally</option>
+      <option value="Yes, regularly">Yes, I volunteer regularly</option>
+    </select>
+
+    <label class="field-label">Describe any relevant experience</label>
+    <textarea id="experience" rows="3" placeholder="e.g. I helped with food drives at my church for 2 years..." style="resize:vertical;"></textarea>
+
+    <label class="field-label">Special skills <span style="color:#94a3b8; font-weight:400;">(tick all that apply)</span></label>
+    <div class="skills-grid">
+      <div class="skill-item" onclick="toggleSkill(this)"><input type="checkbox" value="Driving"><label>🚗 Own vehicle / driving</label></div>
+      <div class="skill-item" onclick="toggleSkill(this)"><input type="checkbox" value="First Aid"><label>🏥 First Aid training</label></div>
+      <div class="skill-item" onclick="toggleSkill(this)"><input type="checkbox" value="Local languages"><label>🗣️ Speaks local languages</label></div>
+      <div class="skill-item" onclick="toggleSkill(this)"><input type="checkbox" value="Heavy lifting"><label>💪 Can carry heavy items</label></div>
+      <div class="skill-item" onclick="toggleSkill(this)"><input type="checkbox" value="Tech savvy"><label>💻 Tech-savvy</label></div>
+      <div class="skill-item" onclick="toggleSkill(this)"><input type="checkbox" value="Organisation"><label>📋 Organised / detail-oriented</label></div>
+    </div>
+
+    <label class="field-label">Why do you want to volunteer with Aidly? <span class="required">*</span></label>
+    <textarea id="motivation" rows="4" placeholder="Tell us what motivates you to help..." style="resize:vertical;"></textarea>
+
+    <div class="form-nav">
+      <button class="btn-prev" onclick="prevStep(3)">← Back</button>
+      <button class="btn-next" onclick="nextStep(3)">Next: Declaration →</button>
+    </div>
+  </div>
+
+  <!-- STEP 4: Declaration -->
+  <div class="form-section" id="step-4">
+    <div class="sec-header"><div class="sec-icon">✍️</div><div><h2>Declaration & Consent</h2><p>Please read and agree before submitting</p></div></div>
+
+    <div class="declaration-box">
+      <p style="font-weight:700; color:#0f172a; margin-bottom:10px;">As an Aidly volunteer I agree to:</p>
+      <p>• Handle all donated items with care and respect</p>
+      <p>• Deliver only to verified recipients as assigned on the platform</p>
+      <p>• Never misuse, sell, or redirect donations for personal gain</p>
+      <p>• Update delivery status promptly on the Aidly app</p>
+      <p>• Maintain the privacy and dignity of all recipients</p>
+      <p>• Give reasonable notice if I need to withdraw from a task</p>
+    </div>
+
+    <div>
+      <div class="agree-item">
+        <input type="checkbox" id="agreeCode">
+        <label for="agreeCode">I have read and agree to the volunteer code of conduct above <span class="required">*</span></label>
+      </div>
+      <div class="agree-item">
+        <input type="checkbox" id="agreeData">
+        <label for="agreeData">I consent to Aidly storing my personal information for volunteer coordination <span class="required">*</span></label>
+      </div>
+      <div class="agree-item">
+        <input type="checkbox" id="agreeContact">
+        <label for="agreeContact">I agree to be contacted via phone/WhatsApp for delivery task assignments</label>
+      </div>
+    </div>
+
+    <label class="field-label" style="margin-top:16px;">Additional comments <span style="color:#94a3b8; font-weight:400;">(optional)</span></label>
+    <textarea id="comments" rows="2" placeholder="Anything else you'd like us to know?" style="resize:vertical;"></textarea>
+
+    <div class="form-nav">
+      <button class="btn-prev" onclick="prevStep(4)">← Back</button>
+      <button class="btn-submit" id="submitBtn" onclick="submitApplication()">🚀 Submit Application</button>
+    </div>
+  </div>
+
+  <!-- SUCCESS SCREEN -->
+  <div class="success-screen" id="successScreen">
+    <div class="big-icon">🎉</div>
+    <h2>Application Submitted!</h2>
+    <p>Thank you for applying to volunteer with Aidly. We're excited to have you!</p>
+    <div class="next-steps">
+      <p style="font-weight:700; margin-bottom:8px;">What happens next:</p>
+      <p>⏳ Admin will review your application within 24-48 hours</p>
+      <p>📧 You'll receive an email once approved</p>
+      <p>🚚 Once approved, login to start accepting delivery tasks!</p>
+    </div>
+    <button onclick="window.location.href='login.html'" style="width:100%; background:#14532d; color:white; border:none; padding:14px; border-radius:12px; font-weight:700; font-size:15px; cursor:pointer; margin-bottom:10px;">
+      Go to Login →
+    </button>
+    <button onclick="logout()" style="width:100%; background:#f1f5f9; color:#475569; border:1px solid #e2e8f0; padding:12px; border-radius:12px; font-weight:600; font-size:14px; cursor:pointer;">
+      Logout
+    </button>
+  </div>
+
+</div>
+
+<script src="js/config.js"></script>
+<script>
+  const API_URL = window.API_URL || "http://127.0.0.1:5000/api";
+  const token = localStorage.getItem("aidlyToken");
+  const user = JSON.parse(localStorage.getItem("aidlyUser") || "{}");
+
+  function logout() { localStorage.clear(); window.location.href = "login.html"; }
+
+  // Guard - must be logged in as volunteer
+  if (!token || user.role?.toLowerCase() !== "volunteer") {
+    window.location.href = "login.html";
+  }
+
+  // If fully applied (has motivation too), go to dashboard
+  if (user.phone && user.area && user.motivation) {
+    window.location.href = "volunteer_dashboard.html";
+  }
+
+  let currentStep = 1;
+  let selectedVehicle = "";
+  let selectedDays = [];
+
+  function toggleDay(el, day) {
+    el.classList.toggle("selected");
+    const cb = el.querySelector("input");
+    cb.checked = !cb.checked;
+    if (cb.checked) selectedDays.push(day);
+    else selectedDays = selectedDays.filter(d => d !== day);
+  }
+
+  function selectVehicle(el, vehicle) {
+    document.querySelectorAll(".vehicle-card").forEach(c => c.classList.remove("selected"));
+    el.classList.add("selected");
+    selectedVehicle = vehicle;
+  }
+
+  function toggleSkill(el) {
+    el.classList.toggle("selected");
+    const cb = el.querySelector("input");
+    cb.checked = !cb.checked;
+  }
+
+  function updateProgress(step) {
+    for (let i = 1; i <= 4; i++) {
+      const c = document.getElementById(`c${i}`);
+      const l = document.getElementById(`l${i}`);
+      c.classList.remove("active", "done");
+      l.classList.remove("active");
+      if (i < step) { c.classList.add("done"); c.textContent = "✓"; }
+      else if (i === step) { c.classList.add("active"); c.textContent = i; l.classList.add("active"); }
+      else { c.textContent = i; }
+    }
+  }
+
+  function showStep(step) {
+    document.querySelectorAll(".form-section").forEach(s => s.classList.remove("active"));
+    document.getElementById(`step-${step}`).classList.add("active");
+    updateProgress(step);
+    currentStep = step;
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function nextStep(from) {
+    if (!validate(from)) return;
+    showStep(from + 1);
+  }
+
+  function prevStep(from) {
+    showStep(from - 1);
+  }
+
+  function validate(step) {
+    if (step === 1) {
+      if (!document.getElementById("phone").value.trim()) return alert("Please enter your phone number!"), false;
+      if (!document.getElementById("area").value.trim()) return alert("Please enter your delivery area!"), false;
+      if (!document.getElementById("radius").value) return alert("Please select your delivery radius!"), false;
+      if (!document.getElementById("emergencyName").value.trim()) return alert("Please enter an emergency contact name!"), false;
+      if (!document.getElementById("emergencyPhone").value.trim()) return alert("Please enter an emergency contact phone!"), false;
+    }
+    if (step === 2) {
+      if (!selectedDays.length) return alert("Please select at least one available day!"), false;
+      if (!document.getElementById("timeOfDay").value) return alert("Please select your preferred time of day!"), false;
+      if (!document.getElementById("hoursPerWeek").value) return alert("Please select how many hours per week!"), false;
+      if (!selectedVehicle) return alert("Please select your mode of transport!"), false;
+    }
+    if (step === 3) {
+      if (!document.getElementById("motivation").value.trim()) return alert("Please tell us why you want to volunteer!"), false;
+    }
+    if (step === 4) {
+      if (!document.getElementById("agreeCode").checked) return alert("Please agree to the volunteer code of conduct!"), false;
+      if (!document.getElementById("agreeData").checked) return alert("Please consent to data storage!"), false;
+    }
+    return true;
+  }
+
+  async function submitApplication() {
+    if (!validate(4)) return;
+
+    const btn = document.getElementById("submitBtn");
+    btn.textContent = "Submitting...";
+    btn.disabled = true;
+
+    const skills = [...document.querySelectorAll(".skill-item.selected input")].map(c => c.value);
+
+    const payload = {
+      phone: document.getElementById("phone").value.trim(),
+      area: document.getElementById("area").value.trim(),
+      vehicle: selectedVehicle,
+      availability: `${selectedDays.join(", ")} — ${document.getElementById("timeOfDay").value} — ${document.getElementById("hoursPerWeek").value}`,
+      experience: `${document.getElementById("priorExp").value}. ${document.getElementById("experience").value.trim()}`,
+      motivation: document.getElementById("motivation").value.trim(),
+      emergencyContact: `${document.getElementById("emergencyName").value.trim()} (${document.getElementById("emergencyRelation").value || "Contact"}) — ${document.getElementById("emergencyPhone").value.trim()}`
+    };
+
+    try {
+      const res = await fetch(`${API_URL}/auth/volunteer-profile`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+        body: JSON.stringify(payload)
+      });
+
+      if (res.ok) {
+        // Update localStorage
+        const updatedUser = { ...user, ...payload };
+        localStorage.setItem("aidlyUser", JSON.stringify(updatedUser));
+        // Hide everything and show success
+        document.querySelector(".progress-bar").style.display = "none";
+        document.querySelector("div[style*='margin-bottom:24px']").style.display = "none";
+        document.querySelectorAll(".form-section").forEach(s => s.style.display = "none");
+        document.getElementById("successScreen").style.display = "block";
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } else {
+        const d = await res.json();
+        alert(d.message || "Submission failed. Please try again.");
+        btn.textContent = "🚀 Submit Application";
+        btn.disabled = false;
+      }
+    } catch {
+      alert("Connection error. Please check your internet and try again.");
+      btn.textContent = "🚀 Submit Application";
+      btn.disabled = false;
+    }
+  }
+</script>
+</body>
+</html>

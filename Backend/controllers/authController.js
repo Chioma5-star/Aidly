@@ -4,6 +4,12 @@ import Notification from "../models/Notification.js";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import { sendPasswordResetEmail, sendVerificationApprovedEmail, sendWelcomeEmail } from "../services/emailService.js";
+import nodemailer from "nodemailer";
+
+const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS }
+});
 
 // Helper: Create a notification
 async function createNotification(userId, message, type) {
@@ -28,7 +34,7 @@ export const registerUser = async (req, res) => {
     try { await sendWelcomeEmail(user.email, user.name, user.role); } catch (e) { console.error("Welcome email error:", e.message); }
 
     res.status(201).json({
-        token: jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET),
+        token: jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "24h" }),
         user: { id: user._id, name: user.name, email: user.email, role: user.role, points: user.points, isVerified: user.isVerified }
     });
   } catch (error) {
@@ -48,11 +54,11 @@ export const loginUser = async (req, res) => {
           await ActivityLog.recordAction(user._id, "LOGIN", "Login success");
       }
       res.json({
-          token: jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET),
+          token: jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "24h" }),
           user: {
               id: user._id, name: user.name, email: user.email,
               role: user.role, points: user.points, isVerified: user.isVerified,
-              idCardPath: user.idCardPath, phone: user.phone, area: user.area
+              idCardPath: user.idCardPath || "", phone: user.phone, area: user.area
           }
       });
     } else {
@@ -81,8 +87,9 @@ export const uploadIdCard = async (req, res) => {
         return res.status(400).json({ message: "Please fill in all needs assessment fields" });
     }
 
-    const idCardPath = `/uploads/${idCardFile.filename}`;
-    const proofOfNeedPath = `/uploads/${proofFile.filename}`;
+    // Cloudinary returns path in file.path
+    const idCardPath = idCardFile.path || idCardFile.secure_url || `/uploads/${idCardFile.filename}`;
+    const proofOfNeedPath = proofFile.path || proofFile.secure_url || `/uploads/${proofFile.filename}`;
 
     await User.findByIdAndUpdate(req.user._id, {
         idCardPath, proofOfNeedPath,
@@ -142,7 +149,7 @@ export const getPendingRecipients = async (req, res) => {
 // 6. Leaderboard
 export const getLeaderboard = async (req, res) => {
     try {
-        const topDonors = await User.find({ role: { $regex: /^donor$/i } })
+        const topDonors = await User.find({ role: { $regex: /^donor$/i }, points: { $gt: 0 } })
             .select("name points")
             .sort({ points: -1 })
             .limit(10);
@@ -175,13 +182,22 @@ export const getPendingVolunteers = async (req, res) => {
 // 9. Update Volunteer Profile
 export const updateVolunteerProfile = async (req, res) => {
     try {
-        const { phone, area } = req.body;
+        const { phone, area, vehicle, availability, experience, motivation, emergencyContact } = req.body;
+        if (!phone || !area) return res.status(400).json({ message: "Phone and area are required" });
+
+        const updateData = { phone, area };
+        if (vehicle) updateData.vehicle = vehicle;
+        if (availability) updateData.availability = availability;
+        if (experience) updateData.experience = experience;
+        if (motivation) updateData.motivation = motivation;
+        if (emergencyContact) updateData.emergencyContact = emergencyContact;
+
         const user = await User.findByIdAndUpdate(
-            req.user._id, { phone, area }, { new: true }
+            req.user._id, updateData, { new: true }
         ).select("-password");
-        res.json({ message: "Profile updated!", user });
+        res.json({ message: "Application submitted!", user });
     } catch (error) {
-        res.status(500).json({ message: "Failed to update profile" });
+        res.status(500).json({ message: "Failed to submit application" });
     }
 };
 
@@ -324,5 +340,108 @@ export const getPublicStats = async (req, res) => {
     } catch (error) {
         console.error("Public stats error:", error);
         res.status(500).json({ message: "Failed to fetch stats" });
+    }
+};
+
+// 16. Reject User (Admin)
+export const rejectUser = async (req, res) => {
+    try {
+        const { reason } = req.body;
+        const user = await User.findById(req.params.userId);
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        // Clear their verification docs
+        await User.findByIdAndUpdate(req.params.userId, {
+            idCardPath: "",
+            proofOfNeedPath: "",
+            isVerified: false
+        });
+
+        // Send rejection email
+        try {
+            await transporter.sendMail({
+                from: `"Aidly" <${process.env.EMAIL_USER}>`,
+                to: user.email,
+                subject: "Your Aidly Verification — Update",
+                html: `
+                    <div style="font-family:Inter,sans-serif; max-width:500px; margin:auto; padding:32px; background:#f8fafc; border-radius:16px;">
+                        <h2 style="color:#14532d;">💚 Aidly</h2>
+                        <h3 style="color:#0f172a;">Verification Update</h3>
+                        <p style="color:#475569;">Hi <strong>${user.name}</strong>,</p>
+                        <p style="color:#475569;">Unfortunately, we were unable to verify your account at this time.</p>
+                        ${reason ? `<div style="background:#fef2f2; border-radius:10px; padding:16px; margin:16px 0;"><p style="color:#ef4444; margin:0;"><strong>Reason:</strong> ${reason}</p></div>` : ""}
+                        <p style="color:#475569;">You are welcome to re-apply with updated documents by logging in and resubmitting your verification.</p>
+                        <a href="${process.env.FRONTEND_URL || 'http://127.0.0.1:5500/frontend'}/login.html" style="display:inline-block; background:#14532d; color:white; padding:12px 24px; border-radius:10px; text-decoration:none; font-weight:700; margin:16px 0;">Re-apply Now</a>
+                        <hr style="border:0; border-top:1px solid #e2e8f0; margin:24px 0;">
+                        <p style="color:#94a3b8; font-size:12px;">Aidly — Connecting Help to Those Who Need It</p>
+                    </div>
+                `
+            });
+        } catch (emailErr) {
+            console.error("Rejection email error:", emailErr.message);
+        }
+
+        res.json({ message: "User rejected and notified." });
+    } catch (error) {
+        console.error("Reject error:", error);
+        res.status(500).json({ message: "Failed to reject user" });
+    }
+};
+
+// 17. Delete User (Admin)
+export const deleteUser = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.userId);
+        if (!user) return res.status(404).json({ message: "User not found" });
+        if (user.role === "Admin") return res.status(403).json({ message: "Cannot delete admin accounts" });
+
+        await User.findByIdAndDelete(req.params.userId);
+        res.json({ message: "User deleted successfully." });
+    } catch (error) {
+        res.status(500).json({ message: "Failed to delete user" });
+    }
+};
+
+// 18. Update Profile
+export const updateProfile = async (req, res) => {
+    try {
+        const { name, phone, area } = req.body;
+        if (!name) return res.status(400).json({ message: "Name is required" });
+
+        const updated = await User.findByIdAndUpdate(
+            req.user._id,
+            { name, phone, area },
+            { new: true }
+        ).select("-password");
+
+        res.json({ message: "Profile updated!", user: updated });
+    } catch (error) {
+        res.status(500).json({ message: "Failed to update profile" });
+    }
+};
+
+// 19. Change Password
+export const changePassword = async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({ message: "Both fields are required" });
+        }
+        if (newPassword.length < 8) {
+            return res.status(400).json({ message: "Password must be at least 8 characters" });
+        }
+
+        const user = await User.findById(req.user._id);
+        const isMatch = await user.matchPassword(currentPassword);
+        if (!isMatch) {
+            return res.status(401).json({ message: "Current password is incorrect" });
+        }
+
+        user.password = newPassword;
+        await user.save();
+
+        res.json({ message: "Password changed successfully!" });
+    } catch (error) {
+        res.status(500).json({ message: "Failed to change password" });
     }
 };

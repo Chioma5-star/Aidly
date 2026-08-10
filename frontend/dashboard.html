@@ -56,6 +56,7 @@
         <span id="userRoleBadge" style="padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; margin-right: 15px; display: none;">ROLE</span>
         <span id="welcomeText" style="font-weight: 600; margin-right: 15px;">Welcome, Guest</span>
         <a href="maps.html" title="Donation Centers" class="nav-icon-btn">📍</a>
+        <a href="profile.html" title="My Profile" class="nav-icon-btn">👤</a>
         <a href="impact.html" title="Impact Dashboard" class="nav-icon-btn">📊</a>
         <a href="notifications.html" id="notifBell" title="Notifications"
            style="position: relative; margin-right: 15px; text-decoration: none; font-size: 22px; line-height: 1;">
@@ -137,6 +138,26 @@
       <p id="uploadStatus" style="margin-top:10px; font-weight:600; text-align:center;"></p>
     </div>
 
+    <!-- RECIPIENT: PENDING VERIFICATION -->
+    <div id="pendingVerificationSection" class="donation-box" style="display:none; border: 2px solid #fbbf24; max-width: 560px; text-align:center;">
+      <div style="font-size:56px; margin-bottom:16px;">⏳</div>
+      <h2 style="color:#92400e; margin-bottom:8px;">Verification Pending</h2>
+      <p style="color:#78350f; margin-bottom:20px; line-height:1.6;">
+        Your verification request has been submitted successfully!<br>
+        Our admin team will review your documents and approve your account shortly.
+      </p>
+      <div style="background:#fffbeb; border-radius:12px; padding:16px; margin-bottom:20px; text-align:left;">
+        <p style="font-size:13px; font-weight:700; color:#92400e; margin-bottom:8px;">What happens next?</p>
+        <p style="font-size:13px; color:#78350f; margin-bottom:6px;">✅ Admin reviews your Ghana Card</p>
+        <p style="font-size:13px; color:#78350f; margin-bottom:6px;">✅ Admin reviews your proof of need</p>
+        <p style="font-size:13px; color:#78350f; margin-bottom:6px;">✅ Admin reads your situation description</p>
+        <p style="font-size:13px; color:#78350f;">📧 You'll receive an email once approved!</p>
+      </div>
+      <button onclick="logout()" style="background:#fef2f2; color:#ef4444; border:1px solid #fecaca; padding:10px 20px; border-radius:10px; font-weight:600; cursor:pointer; width:auto;">
+        Logout
+      </button>
+    </div>
+
     <!-- RECIPIENT DASHBOARD -->
     <div id="recipientDashboard" class="donation-box" style="display:none; max-width: 800px;">
       <section style="margin-bottom: 40px;">
@@ -147,11 +168,10 @@
       <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 30px 0;">
       <section>
         <h2>🎁 Browse Aid</h2>
-        <p style="margin-bottom: 15px;">Items available from our donors.</p>
-        <button onclick="loadAvailableAid()" style="background: #3b82f6; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold;">
-          Browse Available Items
-        </button>
-        <div id="availableItemsList" style="margin-top: 15px; min-height: 100px;"></div>
+        <p style="margin-bottom: 15px; color:#64748b;">Browse items available from our donors — food, clothes and more.</p>
+        <a href="browse.html" style="display:inline-block; background:#14532d; color:white; padding:12px 24px; border-radius:10px; font-weight:700; font-size:14px; text-decoration:none;">
+          🎁 Browse Available Items →
+        </a>
       </section>
     </div>
 
@@ -227,6 +247,7 @@
 
   </main>
 
+  <script src="js/config.js"></script>
   <script src="js/script.js"></script>
   <script>
     const donationImageInput = document.getElementById("donationImageInput");
@@ -248,7 +269,7 @@
         const token = localStorage.getItem("aidlyToken");
         if (!token) return;
         try {
-            const res = await fetch("http://127.0.0.1:5000/api/notifications/unread-count", {
+            const res = await fetch(`${window.API_URL}/notifications/unread-count`, {
                 headers: { "Authorization": `Bearer ${token}` }
             });
             const data = await res.json();

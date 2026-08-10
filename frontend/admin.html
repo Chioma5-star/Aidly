@@ -249,13 +249,14 @@
     </div>
 
     <script>
-        const API_URL = "http://127.0.0.1:5000/api";
+        // API_URL is set globally by config.js
+const API_URL = window.API_URL || "http://127.0.0.1:5000/api";
         let allUsers = [];
         let allDonations = [];
 
         const currentUser = JSON.parse(localStorage.getItem("aidlyUser") || "{}");
         if (!currentUser || currentUser.role?.toLowerCase() !== "admin") {
-            alert("Access denied. Admins only.");
+            toast("Access denied. Admins only.", "error");
             window.location.href = "dashboard.html";
         }
         document.getElementById("adminName").textContent = currentUser.name || "Admin";
@@ -443,7 +444,7 @@
         }
 
         async function saveInvItem(id) {
-            if (!invChanges[id]) return alert("No changes to save!");
+            if (!invChanges[id]) return toast("No changes to save!", "error");
             try {
                 const res = await fetch(`${API_URL}/donations/inventory/${id}`, {
                     method: "PUT",
@@ -452,13 +453,13 @@
                 });
                 if (res.ok) {
                     delete invChanges[id];
-                    alert("✅ Inventory updated!");
+                    toast("✅ Inventory updated!", "success");
                     loadInventory();
                 } else {
                     const d = await res.json();
                     alert(d.message || "Failed to update.");
                 }
-            } catch { alert("Connection error."); }
+            } catch { toast("Connection error.", "error"); }
         }
 
 
@@ -499,19 +500,22 @@
                         <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;">
                             <div>
                                 <p style="font-size:12px;font-weight:700;color:#64748b;margin-bottom:6px;">🪪 GHANA CARD</p>
-                                <img src="http://127.0.0.1:5000${u.idCardPath}"
+                                <img src="${window.API_URL?.replace("/api","") || "http://127.0.0.1:5000"}${u.idCardPath}"
                                      style="width:100%;border-radius:8px;border:1px solid #e2e8f0;"
                                      onerror="this.outerHTML='<p style=color:#ef4444;font-size:13px;>Image not found</p>'">
                             </div>
                             <div>
                                 <p style="font-size:12px;font-weight:700;color:#64748b;margin-bottom:6px;">📄 PROOF OF NEED</p>
-                                ${u.proofOfNeedPath ? `<img src="http://127.0.0.1:5000${u.proofOfNeedPath}"
+                                ${u.proofOfNeedPath ? `<img src="${window.API_URL?.replace("/api","") || "http://127.0.0.1:5000"}${u.proofOfNeedPath}"
                                      style="width:100%;border-radius:8px;border:1px solid #e2e8f0;"
                                      onerror="this.outerHTML='<p style=color:#ef4444;font-size:13px;>Image not found</p>'">` : '<p style="color:#94a3b8;font-size:13px;">Not uploaded</p>'}
                             </div>
                         </div>
 
-                        <button class="btn-verify" onclick="verifyUser('${u._id}')">✅ Verify This User</button>
+                        <div style="display:flex; gap:8px;">
+                            <button class="btn-verify" style="flex:1;" onclick="verifyUser('${u._id}')">✅ Approve</button>
+                            <button onclick="rejectUser('${u._id}', '${u.name}')" style="flex:1; background:#fef2f2 !important; color:#ef4444 !important; border:1px solid #fecaca !important; padding:10px !important; border-radius:10px !important; cursor:pointer !important; font-weight:700 !important; font-size:14px !important;">❌ Reject</button>
+                        </div>
                     </div>
                 `).join('');
             } catch {
@@ -542,12 +546,59 @@
                         <h4>🚚 ${v.name}</h4>
                         <p>📧 ${v.email}</p>
                         <p>📅 Applied: ${new Date(v.createdAt).toLocaleDateString()}</p>
-                        <button class="btn-verify" onclick="verifyUser('${v._id}')">✅ Approve Volunteer</button>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:12px 0; background:#fffbeb; border-radius:10px; padding:12px;">
+                            <div><span style="font-size:11px;font-weight:700;color:#92400e;">PHONE</span><br><span style="font-size:13px;">${v.phone || "—"}</span></div>
+                            <div><span style="font-size:11px;font-weight:700;color:#92400e;">AREA</span><br><span style="font-size:13px;">${v.area || "—"}</span></div>
+                            <div><span style="font-size:11px;font-weight:700;color:#92400e;">VEHICLE</span><br><span style="font-size:13px;">${v.vehicle || "—"}</span></div>
+                            <div><span style="font-size:11px;font-weight:700;color:#92400e;">AVAILABILITY</span><br><span style="font-size:13px;">${v.availability || "—"}</span></div>
+                            <div style="grid-column:1/-1;"><span style="font-size:11px;font-weight:700;color:#92400e;">MOTIVATION</span><br><span style="font-size:13px;">${v.motivation || "—"}</span></div>
+                            <div style="grid-column:1/-1;"><span style="font-size:11px;font-weight:700;color:#92400e;">EXPERIENCE</span><br><span style="font-size:13px;">${v.experience || "—"}</span></div>
+                        </div>
+                        <div style="display:flex; gap:8px;">
+                            <button class="btn-verify" style="flex:1;" onclick="verifyUser('${v._id}')">✅ Approve</button>
+                            <button onclick="rejectUser('${v._id}', '${v.name}')" style="flex:1; background:#fef2f2 !important; color:#ef4444 !important; border:1px solid #fecaca !important; padding:10px !important; border-radius:10px !important; cursor:pointer !important; font-weight:700 !important; font-size:14px !important;">❌ Reject</button>
+                        </div>
                     </div>
                 `).join('');
             } catch {
                 list.innerHTML = "<p class='empty-state' style='color:red;'>Error loading volunteers.</p>";
             }
+        }
+
+        async function rejectUser(userId, name) {
+            const reason = prompt(`Reason for rejecting ${name}'s application (will be sent to user):`);
+            if (reason === null) return; // cancelled
+            try {
+                const res = await fetch(`${API_URL}/auth/reject-user/${userId}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token()}` },
+                    body: JSON.stringify({ reason })
+                });
+                if (res.ok) {
+                    toast("❌ User rejected and notified.", "success");
+                    loadAll();
+                } else {
+                    const d = await res.json();
+                    toast(d.message || "Failed to reject.", "error");
+                }
+            } catch { toast("Connection error.", "error"); }
+        }
+
+        async function deleteUser(userId, name) {
+            if (!confirm(`Are you sure you want to permanently delete ${name}? This cannot be undone.`)) return;
+            try {
+                const res = await fetch(`${API_URL}/auth/delete-user/${userId}`, {
+                    method: "DELETE",
+                    headers: { "Authorization": `Bearer ${token()}` }
+                });
+                if (res.ok) {
+                    toast("🗑️ User deleted successfully.", "success");
+                    loadAll();
+                } else {
+                    const d = await res.json();
+                    toast(d.message || "Failed to delete.", "error");
+                }
+            } catch { toast("Connection error.", "error"); }
         }
 
         async function verifyUser(userId) {
@@ -558,13 +609,13 @@
                     headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token()}` }
                 });
                 if (res.ok) {
-                    alert("✅ User approved!");
+                    toast("✅ User approved!", "success");
                     loadAll();
                 } else {
                     const d = await res.json();
                     alert(d.message || "Failed.");
                 }
-            } catch { alert("Connection error."); }
+            } catch { toast("Connection error.", "error"); }
         }
 
         // ── ALL USERS ──────────────────────────────────────────
@@ -588,7 +639,7 @@
             }
             document.getElementById("usersTable").innerHTML = `
                 <table class="data-table">
-                    <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Points</th><th>Verified</th><th>Joined</th></tr></thead>
+                    <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Points</th><th>Verified</th><th>Joined</th><th>Action</th></tr></thead>
                     <tbody>${users.map(u => `
                         <tr>
                             <td><strong>${u.name}</strong></td>
@@ -597,6 +648,9 @@
                             <td><span style="color:#059669;font-weight:700;">⭐ ${u.points || 0}</span></td>
                             <td>${u.isVerified ? '✅' : '❌'}</td>
                             <td style="color:#94a3b8;">${new Date(u.createdAt).toLocaleDateString()}</td>
+                            <td>
+                                ${u.role !== 'Admin' ? `<button onclick="deleteUser('${u._id}', '${u.name}')" style="background:#fef2f2; color:#ef4444; border:1px solid #fecaca; padding:5px 10px; border-radius:8px; cursor:pointer; font-size:12px; font-weight:600; width:auto;">Delete</button>` : '—'}
+                            </td>
                         </tr>
                     `).join('')}</tbody>
                 </table>`;

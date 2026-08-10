@@ -161,7 +161,7 @@
 
         <!-- APPROVED REQUESTS -->
         <div class="donation-box" style="max-width: 100%;">
-            <p class="section-title"> Approved Donations</p>
+            <p class="section-title">✅ Approved Donations</p>
             <p class="section-subtitle">Items you have already approved and are being delivered.</p>
             <div id="approvedList">
                 <p class="empty-state">Loading...</p>
@@ -171,7 +171,8 @@
     </div>
 
     <script>
-        const API_URL = "http://127.0.0.1:5000/api";
+        // API_URL is set globally by config.js
+const API_URL = window.API_URL || "http://127.0.0.1:5000/api";
 
         async function loadRequests() {
             const token = localStorage.getItem("aidlyToken");
@@ -206,7 +207,7 @@
                         <p class="card-type">📦 ${(r.type || 'ITEM').toUpperCase()}</p>
                         <p class="card-desc">${r.description || 'No description provided'}</p>
                         <p class="card-recipient"><strong>Requested by:</strong> ${r.recipientId?.name || 'Unknown'} &nbsp;·&nbsp; ${r.recipientId?.email || ''}</p>
-                        <button class="btn-approve" onclick="approve('${r._id}')"> Approve This Request</button>
+                        <button class="btn-approve" onclick="approve('${r._id}')">✅ Approve This Request</button>
                     </div>
                 `).join('') : "<p class='empty-state'>No pending requests right now.</p>";
 
@@ -240,14 +241,14 @@
                 });
 
                 if (res.ok) {
-                    alert(" Approved! The recipient will be notified.");
+                    alert("✅ Approved! The recipient will be notified.");
                     loadRequests();
                 } else {
                     const data = await res.json();
                     alert(data.message || "Failed to approve.");
                 }
             } catch (err) {
-                alert("Connection error. Is your backend running?");
+                toast("Connection error. Is your backend running?", "error");
             }
         }
 

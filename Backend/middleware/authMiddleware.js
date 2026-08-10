@@ -1,7 +1,6 @@
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 
-// Make sure 'export' is added here!
 export const protect = async (req, res, next) => {
   let token;
 
@@ -10,13 +9,21 @@ export const protect = async (req, res, next) => {
       token = req.headers.authorization.split(" ")[1];
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       req.user = await User.findById(decoded.id).select("-password");
-      next();
+
+      if (!req.user) {
+        return res.status(401).json({ message: "User no longer exists", expired: true });
+      }
+
+      return next();
     } catch (error) {
-      res.status(401).json({ message: "Not authorized, token failed" });
+      if (error.name === "TokenExpiredError") {
+        return res.status(401).json({ message: "Session expired. Please login again.", expired: true });
+      }
+      return res.status(401).json({ message: "Not authorized, token failed", expired: true });
     }
   }
 
   if (!token) {
-    res.status(401).json({ message: "Not authorized, no token" });
+    return res.status(401).json({ message: "Not authorized, no token", expired: true });
   }
 };
