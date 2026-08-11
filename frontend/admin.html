@@ -250,7 +250,7 @@
 
     <script>
         // API_URL is set globally by config.js
-const API_URL = window.API_URL || "https://aidly-q8i6.onrender.com";
+const API_URL = window.API_URL || "https://aidly-q8i6.onrender.com/api";
         let allUsers = [];
         let allDonations = [];
 
@@ -500,13 +500,13 @@ const API_URL = window.API_URL || "https://aidly-q8i6.onrender.com";
                         <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;">
                             <div>
                                 <p style="font-size:12px;font-weight:700;color:#64748b;margin-bottom:6px;">🪪 GHANA CARD</p>
-                                <img src="${window.API_URL?.replace("/api","") || "https://aidly-q8i6.onrender.com"}/uploads/${u.ghanaCardPath}
+                                <img src="${window.API_URL?.replace("/api","") || "https://aidly-q8i6.onrender.com/api"}/${u.ghanaCardPath}"
                                      style="width:100%;border-radius:8px;border:1px solid #e2e8f0;"
                                      onerror="this.outerHTML='<p style=color:#ef4444;font-size:13px;>Image not found</p>'">
                             </div>
                             <div>
                                 <p style="font-size:12px;font-weight:700;color:#64748b;margin-bottom:6px;">📄 PROOF OF NEED</p>
-                                ${u.proofOfNeedPath ? `<img src="${window.API_URL?.replace("/api","") || "https://aidly-q8i6.onrender.com"}${u.proofOfNeedPath}""
+                                ${u.proofOfNeedPath ? `<img src="${window.API_URL?.replace("/api","") || "https://aidly-q8i6.onrender.com/api"}}${u.proofOfNeedPath}""
                                      style="width:100%;border-radius:8px;border:1px solid #e2e8f0;"
                                      onerror="this.outerHTML='<p style=color:#ef4444;font-size:13px;>Image not found</p>'">` : '<p style="color:#94a3b8;font-size:13px;">Not uploaded</p>'}
                             </div>
