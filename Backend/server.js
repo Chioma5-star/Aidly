@@ -6,7 +6,7 @@ import fs from "fs";
 import { fileURLToPath } from "url";
 import connectDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
-import donationRoutes from "./routes/DonationRoutes.js";
+import donationRoutes from "./routes/donationRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 import locationRoutes from "./routes/locationRoutes.js";
 
