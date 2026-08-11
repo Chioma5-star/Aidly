@@ -30,7 +30,7 @@ app.use(cors({
     "http://localhost:5500",
     "https://aidlyy.netlify.app"
   ],
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "Cache-Control"]
 }));
 
