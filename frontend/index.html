@@ -117,7 +117,7 @@
     // Fetch real stats from backend
     async function loadStats() {
       try {
-        const res = await fetch("http://127.0.0.1:5000/api/auth/public-stats");
+        const res = await fetch("https://aidly-q8i6.onrender.com/api/auth/public-stats");
         if (!res.ok) throw new Error("Failed");
         const data = await res.json();
 
