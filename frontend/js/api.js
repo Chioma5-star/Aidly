@@ -1,5 +1,4 @@
-const API_BASE = "http://localhost:5000/api";
-
+const API_BASE = "https://aidly-q8i6.onrender.com/api";
 const AidlyAPI = {
     getHeaders: () => {
         const token = localStorage.getItem("aidlyToken");
