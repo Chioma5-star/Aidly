@@ -21,7 +21,7 @@ import {
     deleteUser,
     updateProfile,
     changePassword
-} from "../controllers/AuthController.js";
+} from "../controllers/authController.js";
 
 import { protect } from "../middleware/authMiddleware.js";
 import { upload } from "../middleware/uploadMiddleware.js";
