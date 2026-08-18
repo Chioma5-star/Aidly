@@ -215,8 +215,8 @@ export const getAvailableTasks = async (req, res) => {
         const tasks = await Donation.find({
             status: "Approved", volunteerId: null, type: { $ne: 'money' }
         })
-        .populate("user", "name email")
-        .populate("recipientId", "name email")
+        .populate("user", "name email phone")
+        .populate("recipientId", "name email recipientPhone recipientAddress")
         .sort({ updatedAt: -1 });
         res.json(tasks);
     } catch (error) {
@@ -251,8 +251,8 @@ export const acceptTask = async (req, res) => {
 export const getMyTasks = async (req, res) => {
     try {
         const tasks = await Donation.find({ volunteerId: req.user._id })
-            .populate("user", "name email")
-            .populate("recipientId", "name email")
+            .populate("user", "name email phone")
+            .populate("recipientId", "name email recipientPhone recipientAddress")
             .sort({ updatedAt: -1 });
         res.json(tasks);
     } catch (error) {

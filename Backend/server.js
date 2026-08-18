@@ -28,9 +28,10 @@ app.use(cors({
   origin: [
     "http://127.0.0.1:5500",
     "http://localhost:5500",
-    "https://aidlyy.netlify.app"
+    "https://aidly-app.netlify.app", // update this after Netlify deploy
+    /\.netlify\.app$/              // allows any netlify subdomain
   ],
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
   allowedHeaders: ["Content-Type", "Authorization", "Cache-Control"]
 }));
 

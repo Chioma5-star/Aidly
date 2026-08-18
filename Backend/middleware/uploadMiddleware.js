@@ -1,5 +1,3 @@
-import dotenv from "dotenv";
-dotenv.config();
 import multer from "multer";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -7,10 +5,6 @@ import fs from "fs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-console.log("Cloud Name:", process.env.CLOUDINARY_CLOUD_NAME);
-console.log("API Key:", process.env.CLOUDINARY_API_KEY);
-console.log("API Secret:", process.env.CLOUDINARY_API_SECRET ? "Loaded" : "Missing");
 
 // ── Check if Cloudinary is configured ────────────────────────────────────────
 const useCloudinary = !!(

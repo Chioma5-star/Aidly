@@ -2,8 +2,8 @@
 const isLocal = window.location.hostname === "127.0.0.1" ||
                 window.location.hostname === "localhost";
 
-const PROD_BACKEND = "https://aidly-backend.onrender.com";
-const LOCAL_BACKEND = "https://aidly-q8i6.onrender.com/api";
+const PROD_BACKEND = "https://aidly-q8i6.onrender.com";
+const LOCAL_BACKEND = "http://127.0.0.1:5000";
 
 window.BACKEND_URL = isLocal ? LOCAL_BACKEND : PROD_BACKEND;
 window.API_URL = `${window.BACKEND_URL}/api`;

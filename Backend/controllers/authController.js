@@ -82,10 +82,12 @@ export const uploadIdCard = async (req, res) => {
     if (!idCardFile) return res.status(400).json({ message: "Please upload your Ghana Card" });
     if (!proofFile) return res.status(400).json({ message: "Please upload a proof of need document" });
 
-    const { dependents, specificNeed, situation, incomeRange } = req.body;
+    const { dependents, specificNeed, situation, incomeRange, recipientPhone, recipientAddress } = req.body;
     if (!specificNeed || !situation || !incomeRange) {
         return res.status(400).json({ message: "Please fill in all needs assessment fields" });
     }
+    if (!recipientPhone) return res.status(400).json({ message: "Please enter your phone number" });
+    if (!recipientAddress) return res.status(400).json({ message: "Please enter your delivery address" });
 
     // Cloudinary returns path in file.path
     const idCardPath = idCardFile.path || idCardFile.secure_url || `/uploads/${idCardFile.filename}`;
@@ -94,7 +96,8 @@ export const uploadIdCard = async (req, res) => {
     await User.findByIdAndUpdate(req.user._id, {
         idCardPath, proofOfNeedPath,
         dependents: Number(dependents) || 0,
-        specificNeed, situation, incomeRange
+        specificNeed, situation, incomeRange,
+        recipientPhone, recipientAddress
     });
 
     return res.status(200).json({ message: "Verification request submitted!", idCardPath, proofOfNeedPath });

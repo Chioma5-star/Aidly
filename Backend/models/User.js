@@ -12,6 +12,10 @@ const userSchema = new mongoose.Schema({
     // Volunteer fields
     phone: { type: String, default: "" },
     area: { type: String, default: "" },
+
+    // Recipient contact fields
+    recipientPhone: { type: String, default: "" },
+    recipientAddress: { type: String, default: "" },
     vehicle: { type: String, default: "" },
     availability: { type: String, default: "" },
     experience: { type: String, default: "" },

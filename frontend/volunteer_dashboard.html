@@ -59,7 +59,7 @@
         <span class="role-badge">🚚 Volunteer</span>
         <a href="notifications.html" class="notif-link">🔔<span class="notif-badge" id="notifBadge"></span></a>
         <a href="profile.html" style="text-decoration:none; font-size:20px;">👤</a>
-        <a href="maps.html "style="text-decoration:none; font-size:20px;" title="Donation Centers">📍</a>
+        <a href="maps.html" title="Donation Centers" class="nav-icon-btn">📍</a>
         <button class="btn-logout" onclick="logout()">Logout</button>
     </div>
 </nav>
@@ -99,7 +99,7 @@
 
 <script src="js/config.js"></script>
 <script>
-    const API_URL = window.API_URL || "https://aidly-q8i6.onrender.com/api";
+    const API_URL = window.API_URL || "http://127.0.0.1:5000/api";
     const token = localStorage.getItem("aidlyToken");
 
     function logout() { localStorage.clear(); window.location.href = "login.html"; }

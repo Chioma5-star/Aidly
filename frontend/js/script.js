@@ -1,7 +1,7 @@
 /* =========================================
    1. GLOBAL CONFIG & NAVIGATION
    ========================================= */
-const API_URL = window.API_URL || "https://aidly-q8i6.onrender.com/api";
+const API_URL = window.API_URL || "http://127.0.0.1:5000/api";
 
 window.goToRegister = () => { window.location.href = "register.html"; };
 window.goToLogin = () => { window.location.href = "login.html"; };
@@ -232,6 +232,12 @@ window.uploadID = async function() {
     btn.innerText = "Submitting..."; btn.disabled = true;
     if (statusEl) statusEl.innerText = "Uploading documents...";
 
+    const recipientPhone = document.getElementById("recipientPhone")?.value.trim();
+    const recipientAddress = document.getElementById("recipientAddress")?.value.trim();
+
+    if (!recipientPhone) return alert("Please enter your phone number!");
+    if (!recipientAddress) return alert("Please enter your delivery address!");
+
     const formData = new FormData();
     formData.append("idCard", selectedIdCard);
     formData.append("proofOfNeed", selectedProof);
@@ -239,6 +245,8 @@ window.uploadID = async function() {
     formData.append("specificNeed", specificNeed);
     formData.append("situation", situation);
     formData.append("incomeRange", incomeRange);
+    formData.append("recipientPhone", recipientPhone);
+    formData.append("recipientAddress", recipientAddress);
 
     try {
         const res = await fetch(`${API_URL}/auth/verify-id`, {
@@ -299,7 +307,7 @@ window.loadMyRequests = async function() {
 
         list.innerHTML = requests.map(r => `
             <div style="border:1px solid #e2e8f0; border-radius:12px; margin-bottom:12px; overflow:hidden; background:white; box-shadow:0 2px 6px rgba(0,0,0,0.04);">
-                ${r.imagePath ? `<img src="${window.BACKEND_URL || "https://aidly-q8i6.onrender.com/api"}${r.imagePath}" style="width:100%; height:140px; object-fit:cover;" onerror="this.style.display='none'">` : ""}
+                ${r.imagePath ? `<img src="${window.BACKEND_URL || "http://127.0.0.1:5000"}${r.imagePath}" style="width:100%; height:140px; object-fit:cover;" onerror="this.style.display='none'">` : ""}
                 <div style="padding:14px;">
                     <div style="display:flex; justify-content:space-between; align-items:flex-start;">
                         <div>
@@ -356,7 +364,7 @@ window.loadDonationHistory = async function() {
             }
             historyList.innerHTML = donations.map(d => `
                 <div style="padding:12px; border-bottom:1px solid #f1f5f9; display:flex; justify-content:space-between; align-items:center; gap:12px;">
-                    ${d.imagePath ? `<img src="${window.BACKEND_URL || ""}${d.imagePath}"style="width:48px; height:48px; object-fit:cover; border-radius:8px; flex-shrink:0;" onerror="this.style.display='none'">` : `<div style="width:48px; height:48px; background:#f1f5f9; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0;">${d.type === "money" ? "💰" : d.type === "food" ? "🍱" : "👕"}</div>`}
+                    ${d.imagePath ? `<img src="${window.BACKEND_URL || "http://127.0.0.1:5000"}${d.imagePath}" style="width:48px; height:48px; object-fit:cover; border-radius:8px; flex-shrink:0;" onerror="this.style.display='none'">` : `<div style="width:48px; height:48px; background:#f1f5f9; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0;">${d.type === "money" ? "💰" : d.type === "food" ? "🍱" : "👕"}</div>`}
                     <div style="flex:1;">
                         <strong style="font-size:13px;">${(d.type || "DONATION").toUpperCase()}</strong><br>
                         <small style="color:#64748b;">${d.type === "money" ? "₵" + d.amount : (d.description || "No description")}</small>
