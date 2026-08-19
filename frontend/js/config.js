@@ -1,3 +1,5 @@
+// config.js - FIXED VERSION
+
 // ─── Environment Detection ────────────────────────────────────────────────────
 
 const hostname = window.location.hostname;
@@ -13,23 +15,23 @@ window.BACKEND_URL = isLocal ? LOCAL_BACKEND : PROD_BACKEND;
 window.API_URL = `${window.BACKEND_URL}/api`;
 
 
-// ─── Image URL Helper ─────────────────────────────────────────────────────────
+// ─── Image URL Helper (FIXED) ───────────────────────────────────────────────
 
 window.imgUrl = (path) => {
     if (!path) return "";
 
-    // Already a complete URL
+    // ✅ FIX: Handle Cloudinary URLs properly
     if (
         path.startsWith("http://") ||
         path.startsWith("https://") ||
-        path.startsWith("data:")
+        path.startsWith("data:") ||
+        path.includes("cloudinary.com")  // ← ADD THIS
     ) {
         return path;
     }
 
-    // Make sure the path starts with /
+    // ✅ FIX: Remove any leading/trailing slashes issues
     const cleanPath = path.startsWith("/") ? path : `/${path}`;
-
     return `${window.BACKEND_URL}${cleanPath}`;
 };
 
@@ -179,4 +181,4 @@ console.log(
 
 console.log(
     `🔗 API: ${window.API_URL}`
-);StyleSheet
+);
