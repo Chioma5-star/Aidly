@@ -3,7 +3,7 @@
    ========================================= */
 const API_URL = window.API_URL || "https://aidly-q8i6.onrender.com/api";
 
-// ✅ FIXED: Helper function for getting correct image URLs
+// ✅ Helper function for getting correct image URLs
 window.getImageUrl = (path) => {
     if (!path) return "";
     
@@ -20,6 +20,38 @@ window.getImageUrl = (path) => {
     // For local files, add the backend URL
     const cleanPath = path.startsWith("/") ? path : `/${path}`;
     return `${window.BACKEND_URL || "https://aidly-q8i6.onrender.com"}${cleanPath}`;
+};
+
+// ✅ SUCCESS SCREEN FUNCTION - This was missing!
+window.showSuccess = function(role) {
+    // Hide registration form
+    const formSection = document.getElementById("registerFormSection");
+    if (formSection) formSection.style.display = "none";
+    
+    // Show success screen
+    const screen = document.getElementById("successScreen");
+    if (screen) screen.style.display = "block";
+
+    const messages = {
+        Donor: "Your donor account is ready! You can now login and start donating food, clothes, or money.",
+        Recipient: "Your account is created! Login and submit your verification documents to start requesting aid.",
+        Volunteer: "Your volunteer account is ready! Login to complete your profile and start accepting delivery tasks."
+    };
+    
+    const messageEl = document.getElementById("successMessage");
+    if (messageEl) messageEl.textContent = messages[role] || "Welcome to Aidly!";
+
+    // Countdown redirect
+    let secs = 5;
+    const countdownEl = document.getElementById("countdown");
+    const timer = setInterval(() => {
+        secs--;
+        if (countdownEl) countdownEl.textContent = `Redirecting in ${secs} seconds...`;
+        if (secs <= 0) {
+            clearInterval(timer);
+            window.location.href = "login.html";
+        }
+    }, 1000);
 };
 
 window.goToRegister = () => { window.location.href = "register.html"; };
@@ -85,7 +117,7 @@ if (loginForm) {
 }
 
 /* =========================================
-   3. REGISTER
+   3. REGISTER (FIXED)
    ========================================= */
 const registerForm = document.getElementById("registerForm");
 if (registerForm) {
@@ -130,18 +162,16 @@ if (registerForm) {
                     return;
                 }
 
-                // Others see success screen
-                if (typeof showSuccess === "function") showSuccess(role);
-                else {
-                    alert("Account created! Please login.");
-                    window.location.href = "login.html";
-                }
+                // ✅ Show success screen for Donors and Recipients
+                window.showSuccess(role);
+                
             } else {
                 const data = await res.json();
                 alert(data.message || "Registration failed");
                 if (btn) { btn.textContent = "Create Account"; btn.disabled = false; }
             }
         } catch (err) {
+            console.error("Registration error:", err);
             alert("Registration failed. Is your backend running?");
             if (btn) { btn.textContent = "Create Account"; btn.disabled = false; }
         }
@@ -276,11 +306,9 @@ window.uploadID = async function() {
 
         if (res.ok) {
             if (statusEl) statusEl.innerText = "✅ Submitted! Awaiting admin review.";
-            // Update localStorage so pending screen shows
             const currentUser = JSON.parse(localStorage.getItem("aidlyUser") || "{}");
             currentUser.idCardPath = "submitted";
             localStorage.setItem("aidlyUser", JSON.stringify(currentUser));
-            // Show pending screen immediately
             const vs = document.getElementById("verificationSection");
             const pv = document.getElementById("pendingVerificationSection");
             if (vs) vs.style.display = "none";
@@ -300,7 +328,7 @@ window.uploadID = async function() {
 };
 
 /* =========================================
-   6. RECIPIENT — MY REQUESTS (FIXED)
+   6. RECIPIENT — MY REQUESTS
    ========================================= */
 window.loadMyRequests = async function() {
     const list = document.getElementById("myRequestsList");
@@ -363,7 +391,7 @@ window.markAsReceived = async function(itemId) {
 };
 
 /* =========================================
-   7. ACTIVITY HISTORY (FIXED)
+   7. ACTIVITY HISTORY
    ========================================= */
 window.loadDonationHistory = async function() {
     const token = localStorage.getItem("aidlyToken");
@@ -407,7 +435,6 @@ async function initRecipientDashboard() {
     const token = localStorage.getItem("aidlyToken");
 
     try {
-        // Always fetch fresh data from server
         const res = await fetch(`${API_URL}/auth/me`, {
             headers: { "Authorization": `Bearer ${token}` }
         });
@@ -416,21 +443,17 @@ async function initRecipientDashboard() {
 
         const freshUser = await res.json();
 
-        // Update localStorage
         const localUser = JSON.parse(localStorage.getItem("aidlyUser") || "{}");
         localStorage.setItem("aidlyUser", JSON.stringify({ ...localUser, ...freshUser, id: freshUser._id }));
 
         if (freshUser.isVerified) {
-            // Verified — show full dashboard
             const rd = document.getElementById("recipientDashboard");
             if (rd) rd.style.display = "block";
             window.loadMyRequests();
         } else if (freshUser.idCardPath) {
-            // Submitted but not yet approved — show pending
             const pv = document.getElementById("pendingVerificationSection");
             if (pv) pv.style.display = "block";
         } else {
-            // Not submitted yet — show form
             const vs = document.getElementById("verificationSection");
             if (vs) {
                 vs.style.display = "block";
@@ -456,7 +479,6 @@ async function initRecipientDashboard() {
         }
     } catch (err) {
         console.error("Recipient init error:", err);
-        // Fallback to localStorage
         const localUser = JSON.parse(localStorage.getItem("aidlyUser") || "{}");
         if (localUser.isVerified) {
             const rd = document.getElementById("recipientDashboard");
@@ -484,12 +506,10 @@ async function refreshPoints() {
         if (!res.ok) return;
         const freshUser = await res.json();
 
-        // Update localStorage
         const localUser = JSON.parse(localStorage.getItem("aidlyUser") || "{}");
         localUser.points = freshUser.points;
         localStorage.setItem("aidlyUser", JSON.stringify(localUser));
 
-        // Update badge
         const badge = document.getElementById("pointsBadge");
         const pointsEl = document.getElementById("userPoints");
         if (badge && pointsEl) {
@@ -532,7 +552,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const ds = document.getElementById("donorSection");
         if (ds) ds.style.display = "block";
         window.loadDonationHistory();
-        // Fetch fresh points from server
         refreshPoints();
     } else if (role === "recipient") {
         initRecipientDashboard();
