@@ -88,8 +88,7 @@ export const uploadIdCard = async (req, res) => {
     }
     if (!recipientPhone) return res.status(400).json({ message: "Please enter your phone number" });
     if (!recipientAddress) return res.status(400).json({ message: "Please enter your delivery address" });
-
-    // Cloudinary returns path in file.path
+    
     const idCardPath = idCardFile.path || idCardFile.secure_url || `/uploads/${idCardFile.filename}`;
     const proofOfNeedPath = proofFile.path || proofFile.secure_url || `/uploads/${proofFile.filename}`;
 

@@ -15,7 +15,7 @@ window.BACKEND_URL = isLocal ? LOCAL_BACKEND : PROD_BACKEND;
 window.API_URL = `${window.BACKEND_URL}/api`;
 
 
-// ─── Image URL Helper (FIXED) ───────────────────────────────────────────────
+
 
 window.imgUrl = (path) => {
     if (!path) return "";
