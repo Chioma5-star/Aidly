@@ -374,7 +374,7 @@ export const rejectUser = async (req, res) => {
                         <p style="color:#475569;">Unfortunately, we were unable to verify your account at this time.</p>
                         ${reason ? `<div style="background:#fef2f2; border-radius:10px; padding:16px; margin:16px 0;"><p style="color:#ef4444; margin:0;"><strong>Reason:</strong> ${reason}</p></div>` : ""}
                         <p style="color:#475569;">You are welcome to re-apply with updated documents by logging in and resubmitting your verification.</p>
-                        <a href="${process.env.FRONTEND_URL || 'https://aidlyy.netlify.app/'}/login.html" style="display:inline-block; background:#14532d; color:white; padding:12px 24px; border-radius:10px; text-decoration:none; font-weight:700; margin:16px 0;">Re-apply Now</a>
+                        <a href="${process.env.FRONTEND_URL || 'http://127.0.0.1:5500/frontend'}/login.html" style="display:inline-block; background:#14532d; color:white; padding:12px 24px; border-radius:10px; text-decoration:none; font-weight:700; margin:16px 0;">Re-apply Now</a>
                         <hr style="border:0; border-top:1px solid #e2e8f0; margin:24px 0;">
                         <p style="color:#94a3b8; font-size:12px;">Aidly — Connecting Help to Those Who Need It</p>
                     </div>
